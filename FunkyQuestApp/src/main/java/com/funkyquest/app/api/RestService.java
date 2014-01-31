@@ -1,10 +1,10 @@
 package com.funkyquest.app.api;
 
-import com.funkyquest.app.api.utils.GetRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.funkyquest.app.api.utils.Request;
 import com.funkyquest.app.api.utils.Response;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -12,12 +12,10 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,25 +23,21 @@ import java.util.Map;
 class RestService {
 
     public static final String APPLICATION_JSON = "application/json";
-
     private final HttpContext httpContext;
     private final HttpClient httpClient;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public RestService(HttpContext httpContext, HttpClient httpClient) {
         this.httpContext = httpContext;
         this.httpClient = httpClient;
     }
 
-    public HttpContext getHttpContext() {
-        return httpContext;
-    }
-
-    public Response sendPost(URI uri, JSONObject body)
+    public <T> Response post(Request<T> requestData)
             throws IOException {
-        HttpPost request = new HttpPost(uri);
+        HttpPost request = new HttpPost(requestData.getUri());
         StringEntity entity = null;
         try {
-            entity = new StringEntity(body.toString(), "UTF-8");
+            entity = new StringEntity(mapper.writeValueAsString(requestData.getRequestData()), "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -51,34 +45,34 @@ class RestService {
         request.addHeader("Content-Type", APPLICATION_JSON);
         request.addHeader("Accept", APPLICATION_JSON);
         HttpResponse response = httpClient.execute(request, httpContext);
-        StatusLine statusLine = response.getStatusLine();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(
-                (int) response.getEntity().getContentLength());
-        response.getEntity().writeTo(baos);
-        return new Response(statusLine, new String(baos.toByteArray()));
+        String responseString = responseToString(response);
+        return new Response(response.getStatusLine(), responseString);
     }
 
-
-    public Response get(GetRequest requestData)
+    public Response get(Request<Map<String, String>> requestData)
             throws IOException {
         String urlString = requestData.getUri().toString();
-        if (!urlString.endsWith("?")) {
-            urlString += "?";
-        }
         List<NameValuePair> paramList = new ArrayList<NameValuePair>();
-        for (Map.Entry<String, String> entry : requestData.getParameters().entrySet()) {
+        for (Map.Entry<String, String> entry : requestData.getRequestData().entrySet()) {
             paramList.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+        }
+        if (!paramList.isEmpty()) {
+            urlString += "?";
         }
         urlString += URLEncodedUtils.format(paramList, "UTF-8");
         HttpGet request = new HttpGet(urlString);
         request.addHeader("Content-Type", APPLICATION_JSON);
         request.addHeader("Accept", APPLICATION_JSON);
         HttpResponse response = httpClient.execute(request, httpContext);
-        StatusLine statusLine = response.getStatusLine();
+        String responseString = responseToString(response);
+        return new Response(response.getStatusLine(), responseString);
+    }
+
+    private String responseToString(HttpResponse response) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(
                 (int) response.getEntity().getContentLength());
         response.getEntity().writeTo(baos);
-        return new Response(statusLine, new String(baos.toByteArray()));
+        return new String(baos.toByteArray());
     }
 
 }

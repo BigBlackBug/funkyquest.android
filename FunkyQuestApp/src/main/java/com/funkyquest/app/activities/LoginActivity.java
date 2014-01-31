@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,9 +16,9 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import com.funkyquest.app.FunkyQuestApplication;
-import com.funkyquest.app.api.FQApi;
 import com.funkyquest.app.api.FQServiceAPI;
-import com.funkyquest.app.api.utils.NetworkCallback;
+import com.funkyquest.app.api.LoginCredentials;
+import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.qbix.funkyquest.R;
 
@@ -40,7 +39,7 @@ public class LoginActivity extends Activity {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
+//    private Login mAuthTask = null;
     // Values for email and password at the time of the login attempt.
     private String mEmail;
     private String mPassword;
@@ -50,7 +49,6 @@ public class LoginActivity extends Activity {
     private View mLoginFormView;
     private View mLoginStatusView;
     private TextView mLoginStatusMessageView;
-    private FQApi fqApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +57,6 @@ public class LoginActivity extends Activity {
 
         setContentView(R.layout.activity_login);
         Properties properties = FunkyQuestApplication.getDefaultProperties(getApplicationContext());
-        String serverHost = properties.getProperty("server_host");
-        int serverPort = Integer.parseInt(properties.getProperty("server_port"));
-        fqApi = new FQApi(serverHost, serverPort);
 
         // Set up the login form.
         mEmail = properties.get("default_user").toString();
@@ -110,9 +105,9 @@ public class LoginActivity extends Activity {
      * errors are presented and no actual login attempt is made.
      */
     public void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
+//        if (mAuthTask != null) {
+//            return;
+//        }
 
         // Reset errors.
         mEmailView.setError(null);
@@ -156,11 +151,81 @@ public class LoginActivity extends Activity {
             // perform the user login attempt.
             mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
             showProgress(true);
-            mAuthTask = new UserLoginTask();
-            mAuthTask.execute((Void) null);
+//            mAuthTask = new UserLoginTask();
+//            mAuthTask.execute((Void) null);
+
+            Properties properties = FunkyQuestApplication.getDefaultProperties(getApplicationContext());
+            String serverHost = properties.getProperty("server_host");
+            int serverPort = Integer.parseInt(properties.getProperty("server_port"));
+            FQServiceAPI serviceAPI = new FQServiceAPI(serverHost, serverPort);
+            serviceAPI.login(new LoginCallback(serviceAPI), new LoginCredentials(mEmail, mPassword));
         }
     }
 
+    private class LoginCallback implements NetworkCallback<Long>{
+        private FQServiceAPI serviceAPI;
+
+        private LoginCallback(FQServiceAPI serviceAPI) {
+            this.serviceAPI = serviceAPI;
+        }
+
+        @Override
+        public void onSuccess(final Long userID) {
+            FunkyQuestApplication.showToast(
+                    LoginActivity.this, "Login Successful",
+                    FunkyQuestApplication.Duration.SHORT);
+
+            //here it will have all the needed cookies
+            serviceAPI.getCurrentGame(new NetworkCallback<GameDTO>() {
+                @Override
+                public void onSuccess(GameDTO currentGame) {
+                    if (currentGame == null) {
+                        //TODO show list of available games
+                    } else {
+                        //TODO show main activity
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        intent.putExtra("userID", userID);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+
+                @Override
+                public void onException(Exception ex) {
+                     //TODO
+                }
+
+                @Override
+                public void onApplicationError(int errorCode) {
+
+                }
+
+                @Override
+                public void onPostExecute() {
+
+                }
+            });
+        }
+
+        @Override
+        public void onException(Exception ex) {
+            mPasswordView
+                    .setError(getString(R.string.error_incorrect_password));
+            mPasswordView.requestFocus();
+        }
+
+        @Override
+        public void onApplicationError(int errorCode) {
+            //TODO
+
+        }
+
+        @Override
+        public void onPostExecute() {
+//            mAuthTask = null;
+            showProgress(false);
+        }
+    }
     /**
      * Shows the progress UI and hides the login form.
      */
@@ -204,75 +269,4 @@ public class LoginActivity extends Activity {
         }
     }
 
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    public class UserLoginTask extends AsyncTask<Void, Void, FQApi.LoginResult> {
-
-        private Throwable exception;
-
-        @Override
-        protected FQApi.LoginResult doInBackground(Void... params) {
-            try {
-                this.exception = null;
-                return fqApi.login(mEmail, mPassword);
-            } catch (Exception e) {
-                Log.i(TAG, "Ошибка логина", e);
-                this.exception = e;
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(final FQApi.LoginResult loginResult) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (exception != null) {
-                mPasswordView
-                        .setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            } else {
-                FunkyQuestApplication.showToast(
-                        LoginActivity.this, "TEXT",
-                        FunkyQuestApplication.Duration.LONG);
-                final long userID = loginResult.getUserID();
-                FQServiceAPI fqServiceApi = loginResult.getFqServiceApi();
-
-                fqServiceApi.getCurrentGame(new NetworkCallback<GameDTO>() {
-                    @Override
-                    public void onSuccess(GameDTO currentGame) {
-                        if (currentGame == null) {
-                            //TODO show list of available games
-                        } else {
-                            //TODO show main activity
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            intent.putExtra("userID", userID);
-                            startActivity(intent);
-                            finish();
-                        }
-                        Log.e(TAG, "OLOLO", exception);
-                    }
-
-                    @Override
-                    public void onException(Exception ex) {
-
-                    }
-
-                    @Override
-                    public void onApplicationError(int errorCode) {
-
-                    }
-                });
-
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
-    }
 }

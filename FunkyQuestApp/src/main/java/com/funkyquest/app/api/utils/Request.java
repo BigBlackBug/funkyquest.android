@@ -1,22 +1,20 @@
 package com.funkyquest.app.api.utils;
 
 import java.net.URI;
-import java.util.Map;
 
-public class GetRequest {
+public class Request<T> {
     private final URI uri;
-    private final Map<String, String> parameters;
+    private final T parameters;
 
     public URI getUri() {
         return uri;
     }
 
-    public Map<String, String> getParameters() {
+    public T getRequestData() {
         return parameters;
     }
 
-    public GetRequest(URI uri, Map<String, String> parameters) {
-
+    public Request(URI uri, T parameters) {
         this.uri = uri;
         this.parameters = parameters;
     }

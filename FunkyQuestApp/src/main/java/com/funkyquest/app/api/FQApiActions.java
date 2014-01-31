@@ -10,7 +10,7 @@ import java.net.URL;
 /**
  * Created by bigblackbug on 1/28/14.
  */
-public enum FQApiActions {
+enum FQApiActions {
     LOGIN("/api/login"),
     ACTIVE_GAME("/api/activeGames");
 

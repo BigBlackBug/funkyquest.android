@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/FunkyQuestApp.iml" filepath="$PROJECT_DIR$/FunkyQuestApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/FunkyQuestApp/FunkyQuestApp-FunkyQuestApp.iml" filepath="$PROJECT_DIR$/FunkyQuestApp/FunkyQuestApp-FunkyQuestApp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/funkyquestandroid.iml" filepath="$PROJECT_DIR$/funkyquestandroid.iml" />
     </modules>
   </component>
 </project>
