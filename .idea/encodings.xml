@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/AbstractDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/AccountLocation.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/AccountType.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/AnswerDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/AnswerType.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameLimitationsDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameResultEntryDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameStatus.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameStatusDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameTemplateDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/GameType.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/HintDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/InGameTaskDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/InGameTaskSequenceDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/LocationDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/MediaObjectDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/PaymentDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/PlayerAnswerDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/PlayerInviteDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/TaskDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/TeamDTO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/FunkyQuestApp/src/main/java/com/funkyquest/app/dto/UserDTO.java" charset="UTF-8" />
+  </component>
+</project>
+
