@@ -4,6 +4,8 @@ import android.app.*;
 import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
@@ -67,6 +69,10 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 //            //TODO onexc
 //        });
 
+        LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
+        mainLayout.addView(new GameStatsView(this),0,
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
 
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
