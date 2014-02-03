@@ -13,6 +13,7 @@ import java.util.Locale;
 
 public class GameActivity extends Activity implements ActionBar.TabListener {
 
+    public static final int TAB_NUMBER = 4;
     private final ObjectMapper mapper = new ObjectMapper();
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -80,6 +81,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setOffscreenPageLimit(TAB_NUMBER);
 
         // When swiping between different sections, select the corresponding
         // tab. We can also use ActionBar.Tab#select() to do this if we have
@@ -174,7 +176,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
         @Override
         public int getCount() {
-            return 4;
+            return TAB_NUMBER;
         }
 
         @Override

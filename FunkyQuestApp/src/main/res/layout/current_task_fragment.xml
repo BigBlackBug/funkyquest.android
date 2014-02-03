@@ -38,12 +38,11 @@
                     android:text="A huge text description of the task"
                     android:textAppearance="@android:style/TextAppearance.Large"/>
 
-            <TextView
-                    android:layout_marginRight="40dp"
-                    android:layout_width="wrap_content"
+            <Button
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="15dip"
-                    android:text="MAP"
+                    android:text="Посмотреть на карте"
                     android:layout_gravity="center"
                     android:textAppearance="@android:style/TextAppearance.Large"/>
         </LinearLayout>
