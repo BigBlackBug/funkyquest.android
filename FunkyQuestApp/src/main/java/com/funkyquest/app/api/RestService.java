@@ -37,7 +37,14 @@ class RestService {
         HttpPost request = new HttpPost(requestData.getUri());
         StringEntity entity = null;
         try {
-            entity = new StringEntity(mapper.writeValueAsString(requestData.getRequestData()), "UTF-8");
+            T reqData = requestData.getRequestData();
+            String entityData;
+            if (reqData == null) {
+                entityData = "";
+            } else {
+                entityData = mapper.writeValueAsString(reqData);
+            }
+            entity = new StringEntity(entityData, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

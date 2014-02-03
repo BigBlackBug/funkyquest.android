@@ -4,14 +4,16 @@ import android.app.*;
 import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.view.*;
-import android.widget.TextView;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.funkyquest.app.dto.GameDTO;
+import com.funkyquest.app.dto.InGameTaskDTO;
 import com.qbix.funkyquest.R;
 
 import java.util.Locale;
 
-public class MainActivity extends Activity implements ActionBar.TabListener {
+public class GameActivity extends Activity implements ActionBar.TabListener {
 
+    private final ObjectMapper mapper = new ObjectMapper();
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -21,24 +23,55 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
      * {@link android.support.v13.app.FragmentStatePagerAdapter}.
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
-
     /**
      * The {@link android.support.v4.view.ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
+    private long userID;
+    private long teamID;
+    private long gameID;
+    private GameDTO gameDTO;
+    private InGameTaskDTO currentTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        long userID = getIntent().getLongExtra("userID", 1L);
-
+//
+        //TODO uncomment
+//        userID = getIntent().getLongExtra("userID", 1L);
+//        String gameDTOString = getIntent().getStringExtra("gameDTO");
+//        try {
+//            gameDTO = mapper.readValue(gameDTOString, GameDTO.class);
+//        } catch (IOException e) {
+//        }
+//        Set<InGameTaskSequenceDTO> teamTasks = gameDTO.getTeamTasks();
+//        for(InGameTaskSequenceDTO dto:teamTasks){
+//            TeamDTO team = dto.getTeam();
+//            if(team.getTeammates().contains(userID)){
+//                teamID = team.getId();
+//                break;
+//            }
+//        }
+//        FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+//        serviceAPI.getCurrentTask(gameID, new SimpleNetworkCallback<InGameTaskDTO>() {
+//            @Override
+//            public void onSuccess(InGameTaskDTO arg) {
+//                if (arg == null) {
+//                    //TODO no more tasks, yay
+//                } else {
+//                    currentTask = arg;
+//                }
+//            }
+//            //TODO onexc
+//        });
 
 
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -71,26 +104,24 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.main, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        switch (item.getItemId()) {
+//            case R.id.action_settings:
+//                return true;
+//        }
+//        return super.onOptionsItemSelected(item);
+//    }
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
@@ -113,21 +144,37 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
+        private ChatFragment chatFragment;
+        private CurrentTaskFragment currentTaskFragment;
+        private GameInfoFragment gameInfoFragment;
+        private MapFragment mapFragment;
+
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
+            chatFragment = new ChatFragment("LOLCHAT");
+            currentTaskFragment = new CurrentTaskFragment(gameID, currentTask);
+            gameInfoFragment = new GameInfoFragment("GAMEINFO");
+            mapFragment = new MapFragment("MAP");
         }
 
         @Override
         public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a DummyFragment (defined as a static inner class below).
-            return DummyFragment.newInstance(position + 1);
+            if (position == 0) {
+                return currentTaskFragment;
+            } else if (position == 1) {
+                return mapFragment;
+            } else if (position == 2) {
+                return gameInfoFragment;
+            } else if (position == 3) {
+                return chatFragment;
+            } else {
+                return null;
+            }
         }
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
-            return 3;
+            return 4;
         }
 
         @Override
@@ -135,48 +182,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             Locale l = Locale.getDefault();
             switch (position) {
                 case 0:
-                    return getString(R.string.title_section1).toUpperCase(l);
+                    return getString(R.string.task_fragment_title).toUpperCase(l);
                 case 1:
-                    return getString(R.string.title_section2).toUpperCase(l);
+                    return getString(R.string.map_fragment_title).toUpperCase(l);
                 case 2:
-                    return getString(R.string.title_section3).toUpperCase(l);
+                    return getString(R.string.gameinfo_fragment_title).toUpperCase(l);
+                case 3:
+                    return getString(R.string.chat_gragment_title).toUpperCase(l);
             }
             return null;
-        }
-    }
-
-    /**
-     * A dummy fragment containing a simple view.
-     */
-    public static class DummyFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static DummyFragment newInstance(int sectionNumber) {
-            DummyFragment fragment = new DummyFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public DummyFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
-            dummyTextView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
         }
     }
 

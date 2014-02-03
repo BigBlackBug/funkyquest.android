@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.FunkyQuestApplication;
 import com.funkyquest.app.api.FQServiceAPI;
 import com.funkyquest.app.api.LoginCredentials;
@@ -36,6 +38,7 @@ public class LoginActivity extends Activity {
 //    public static final String EXTRA_EMAIL =
 //            "com.example.android.authenticatordemo.extra.EMAIL";
     public static final String TAG = "TAG";
+    private final ObjectMapper mapper = new ObjectMapper();
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -50,6 +53,7 @@ public class LoginActivity extends Activity {
     private View mLoginStatusView;
     private TextView mLoginStatusMessageView;
 
+    //TODO придумать обработку истории и прочего
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,21 +129,17 @@ public class LoginActivity extends Activity {
             mPasswordView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
             cancel = true;
-        } else if (mPassword.length() < 4) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
-            cancel = true;
-        }
-
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(mEmail)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!mEmail.contains("@")) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel = true;
+        } else {
+            // Check for a valid email address.
+            if (TextUtils.isEmpty(mEmail)) {
+                mEmailView.setError(getString(R.string.error_field_required));
+                focusView = mEmailView;
+                cancel = true;
+            } else if (!mEmail.contains("@")) {
+                mEmailView.setError(getString(R.string.error_invalid_email));
+                focusView = mEmailView;
+                cancel = true;
+            }
         }
 
         if (cancel) {
@@ -154,78 +154,11 @@ public class LoginActivity extends Activity {
 //            mAuthTask = new UserLoginTask();
 //            mAuthTask.execute((Void) null);
 
-            Properties properties = FunkyQuestApplication.getDefaultProperties(getApplicationContext());
-            String serverHost = properties.getProperty("server_host");
-            int serverPort = Integer.parseInt(properties.getProperty("server_port"));
-            FQServiceAPI serviceAPI = new FQServiceAPI(serverHost, serverPort);
+            FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
             serviceAPI.login(new LoginCallback(serviceAPI), new LoginCredentials(mEmail, mPassword));
         }
     }
 
-    private class LoginCallback implements NetworkCallback<Long>{
-        private FQServiceAPI serviceAPI;
-
-        private LoginCallback(FQServiceAPI serviceAPI) {
-            this.serviceAPI = serviceAPI;
-        }
-
-        @Override
-        public void onSuccess(final Long userID) {
-            FunkyQuestApplication.showToast(
-                    LoginActivity.this, "Login Successful",
-                    FunkyQuestApplication.Duration.SHORT);
-
-            //here it will have all the needed cookies
-            serviceAPI.getCurrentGame(new NetworkCallback<GameDTO>() {
-                @Override
-                public void onSuccess(GameDTO currentGame) {
-                    if (currentGame == null) {
-                        //TODO show list of available games
-                    } else {
-                        //TODO show main activity
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra("userID", userID);
-                        startActivity(intent);
-                        finish();
-                    }
-                }
-
-                @Override
-                public void onException(Exception ex) {
-                     //TODO
-                }
-
-                @Override
-                public void onApplicationError(int errorCode) {
-
-                }
-
-                @Override
-                public void onPostExecute() {
-
-                }
-            });
-        }
-
-        @Override
-        public void onException(Exception ex) {
-            mPasswordView
-                    .setError(getString(R.string.error_incorrect_password));
-            mPasswordView.requestFocus();
-        }
-
-        @Override
-        public void onApplicationError(int errorCode) {
-            //TODO
-
-        }
-
-        @Override
-        public void onPostExecute() {
-//            mAuthTask = null;
-            showProgress(false);
-        }
-    }
     /**
      * Shows the progress UI and hides the login form.
      */
@@ -266,6 +199,77 @@ public class LoginActivity extends Activity {
             // and hide the relevant UI components.
             mLoginStatusView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private class LoginCallback implements NetworkCallback<Long> {
+        private FQServiceAPI serviceAPI;
+
+        private LoginCallback(FQServiceAPI serviceAPI) {
+            this.serviceAPI = serviceAPI;
+        }
+
+        @Override
+        public void onSuccess(final Long userID) {
+            FunkyQuestApplication.showToast(
+                    LoginActivity.this, "Login Successful",
+                    FunkyQuestApplication.Duration.SHORT);
+
+            //here it will have all the needed cookies
+            serviceAPI.getCurrentGame(new NetworkCallback<GameDTO>() {
+                @Override
+                public void onSuccess(GameDTO currentGame) {
+                    if (currentGame == null) {
+                        //TODO show list of available games
+                    } else {
+                        //TODO show main activity
+                        Intent intent = new Intent(LoginActivity.this, GameActivity.class);
+                        intent.putExtra("userID", userID);
+                        try {
+                            intent.putExtra("gameDTO", mapper.writeValueAsString(currentGame));
+                        } catch (JsonProcessingException e) {
+
+                        }
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+
+                @Override
+                public void onException(Exception ex) {
+                    //TODO
+                }
+
+                @Override
+                public void onApplicationError(int errorCode) {
+
+                }
+
+                @Override
+                public void onPostExecute() {
+
+                }
+            });
+        }
+
+        @Override
+        public void onException(Exception ex) {
+            mPasswordView
+                    .setError(getString(R.string.error_incorrect_password));
+            mPasswordView.requestFocus();
+        }
+
+        @Override
+        public void onApplicationError(int errorCode) {
+            //TODO
+
+        }
+
+        @Override
+        public void onPostExecute() {
+//            mAuthTask = null;
+            showProgress(false);
         }
     }
 

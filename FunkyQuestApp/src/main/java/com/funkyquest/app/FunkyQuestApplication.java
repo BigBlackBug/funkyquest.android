@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+import com.funkyquest.app.api.FQServiceAPI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +24,18 @@ public class FunkyQuestApplication extends Application {
 
     public static Context getGlobalApplicationContext() {
         return context;
+    }
+
+    private static FQServiceAPI serviceAPI;
+
+    public static FQServiceAPI getServiceAPI() {
+        if(serviceAPI == null){
+            Properties properties = getDefaultProperties(context);
+            String serverHost = properties.getProperty("server_host");
+            int serverPort = Integer.parseInt(properties.getProperty("server_port"));
+            serviceAPI = new FQServiceAPI(serverHost, serverPort);
+        }
+        return serviceAPI;
     }
 
     @Override

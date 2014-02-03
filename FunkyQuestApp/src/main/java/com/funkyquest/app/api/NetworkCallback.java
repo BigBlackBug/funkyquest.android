@@ -5,6 +5,11 @@ package com.funkyquest.app.api;
  */
 public interface NetworkCallback<T> {
 
+    /**
+     * Вызывается при успешном выполнении запроса.
+     * Если ответ пришёл пустой, то arg будет null
+     * @param arg
+     */
     public void onSuccess(T arg);
 
     public void onException(Exception ex);

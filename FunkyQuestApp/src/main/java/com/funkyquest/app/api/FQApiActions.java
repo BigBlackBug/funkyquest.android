@@ -12,7 +12,11 @@ import java.net.URL;
  */
 enum FQApiActions {
     LOGIN("/api/login"),
-    ACTIVE_GAME("/api/activeGames");
+    ACTIVE_GAME("/api/activeGames"),
+    CURRENT_TASK("/api/activeGames/%s/task"),
+    TAKE_NEXT_HINT("/api/activeGames/%s/tasks/%s/nextHint"),
+    POST_ANSWER("/api/activeGames/%s/tasks/%s/playerAnswers");
+    private final String path;
 
     FQApiActions(String path) {
         this.path = path;
@@ -22,11 +26,9 @@ enum FQApiActions {
         return path;
     }
 
-    private final String path;
-
-    public URI createURI(String host, int port) {
+    public URI createURI(String host, int port, Object... args) {
         try {
-            return new URL("http", host, port, getPath()).toURI();
+            return new URL("http", host, port, String.format(getPath(), args)).toURI();
         } catch (URISyntaxException e) {
             throw new FunkyQuestException("URI error. Will never be thrown");
         } catch (MalformedURLException e) {

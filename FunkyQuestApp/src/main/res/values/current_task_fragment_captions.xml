@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="answer_task">Ответить</string>
+    <string name="take_hint">Взять подсказку</string>
+</resources>
