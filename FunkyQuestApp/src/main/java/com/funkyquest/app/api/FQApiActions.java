@@ -14,7 +14,7 @@ public enum FQApiActions {
     CONNECT_TO_WEBSOCKET(""/*TODO*/){
         @Override
         public URI createURI(String host, int port, Object... args) {
-            return createURI("wss",host,port,args);
+            return createURI("ws",host,port,args);
         }
     },
     LOGIN("/api/login"),
@@ -40,9 +40,9 @@ public enum FQApiActions {
         try {
             return new URL(protocol, host, port, String.format(getPath(), args)).toURI();
         } catch (URISyntaxException e) {
-            throw new FunkyQuestException("URI error. Will never be thrown");
+            throw new FunkyQuestException("URI error. Will never be thrown",e);
         } catch (MalformedURLException e) {
-            throw new FunkyQuestException("URI error. Will never be thrown");
+            throw new FunkyQuestException("URI error. Will never be thrown",e);
         }
     }
 }

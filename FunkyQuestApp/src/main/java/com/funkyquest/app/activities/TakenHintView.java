@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.funkyquest.app.dto.HintDTO;
-import com.qbix.funkyquest.R;
+import com.funkyquest.app.R;
 
 public class TakenHintView extends LinearLayout {
 

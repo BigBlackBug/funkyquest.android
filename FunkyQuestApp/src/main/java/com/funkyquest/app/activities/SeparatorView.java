@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.qbix.funkyquest.R;
+import com.funkyquest.app.R;
 
 /**
  * Created by BigBlackBug on 2/3/14.

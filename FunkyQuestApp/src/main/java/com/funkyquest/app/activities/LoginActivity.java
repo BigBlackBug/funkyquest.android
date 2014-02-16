@@ -23,7 +23,7 @@ import com.funkyquest.app.api.LoginCredentials;
 import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
-import com.qbix.funkyquest.R;
+import com.funkyquest.app.R;
 
 import java.util.Properties;
 

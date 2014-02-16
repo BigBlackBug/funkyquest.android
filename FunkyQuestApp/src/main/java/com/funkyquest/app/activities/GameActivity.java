@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.FQWebSocketClient;
 import com.funkyquest.app.FunkyQuestApplication;
+import com.funkyquest.app.R;
 import com.funkyquest.app.WebSocketClientListener;
 import com.funkyquest.app.activities.gps.FQLocationListener;
 import com.funkyquest.app.activities.gps.GPSTracker;
@@ -20,7 +21,6 @@ import com.funkyquest.app.dto.InGameTaskDTO;
 import com.funkyquest.app.dto.InGameTaskSequenceDTO;
 import com.funkyquest.app.dto.TeamDTO;
 import com.funkyquest.app.util.websockets.WebSocketClient;
-import com.qbix.funkyquest.R;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -81,7 +81,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 					//TODO
 				}
 			});
-		socketClient.connect();
+//		socketClient.connect();
 
         userID = getIntent().getLongExtra("userID", -1L);
         String currentGameJson = getIntent().getStringExtra("currentGame");

@@ -12,12 +12,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.funkyquest.app.FQWebSocketClient;
 import com.funkyquest.app.FunkyQuestApplication;
+import com.funkyquest.app.R;
 import com.funkyquest.app.WebSocketClientListener;
 import com.funkyquest.app.api.FQServiceAPI;
 import com.funkyquest.app.api.SimpleNetworkCallback;
 import com.funkyquest.app.dto.*;
 import com.funkyquest.app.dto.util.EventType;
-import com.qbix.funkyquest.R;
 
 /**
  * Created by BigBlackBug on 2/1/14.
@@ -36,8 +36,9 @@ public class CurrentTaskFragment extends Fragment {
 	private TextView taskDescriptionTV;
 
 	private boolean hintRequested = false;
+    private ViewGroup buttonsLayout;
 
-	public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO,FQWebSocketClient socketClient) {
+    public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO,FQWebSocketClient socketClient) {
         this.gameID = gameID;
 		this.socketClient = socketClient;
         this.taskDTO = taskDTO;
@@ -59,16 +60,23 @@ public class CurrentTaskFragment extends Fragment {
 		new WebSocketClientListener.FQMessageListener<Void>() {
 			@Override
 			public void onMessage(Void message) {
-//				TODO unfreeze buttons
-//				TODO get next task
+            serviceAPI.getCurrentTask(gameID,new SimpleNetworkCallback<InGameTaskDTO>() {
+                @Override
+                public void onSuccess(InGameTaskDTO arg) {
+                    //TODO add spinner. 'getting new task'
+                    CurrentTaskFragment.this.taskDTO = arg;
+                    fillViews();
+                    FunkyQuestApplication.setViewState(true,buttonsLayout);
+                }
+            });
 			}
 		});
 		socketClient.addMessageListener(EventType.ANSWER_REJECTED,
 		new WebSocketClientListener.FQMessageListener<Void>() {
 			@Override
 			public void onMessage(Void message) {
-				//TODO show notif
-//				TODO unfreeze buttons
+            //TODO show notif
+            FunkyQuestApplication.setViewState(true,buttonsLayout);
 			}
 		});
 
@@ -76,18 +84,18 @@ public class CurrentTaskFragment extends Fragment {
 		new WebSocketClientListener.FQMessageListener<Void>() {
 			@Override
 			public void onMessage(Void message) {
-				//TODO show notif
-//				TODO freeze buttons
+            //TODO show notif
+            FunkyQuestApplication.setViewState(false,buttonsLayout);
 			}
 		});
 		socketClient.addMessageListener(EventType.HINT_REQUESTED,
 		new WebSocketClientListener.FQMessageListener<HintDTO>() {
 			@Override
 			public void onMessage(HintDTO hintDTO) {
-				if(!hintRequested){
-					addHint(hintDTO);
-				}
-				hintRequested = false;
+            if(!hintRequested){
+                addHint(hintDTO);
+            }
+            hintRequested = false;
 			}
 		});
 	}
@@ -98,12 +106,14 @@ public class CurrentTaskFragment extends Fragment {
 	    final View rootView = inflater.inflate(R.layout.current_task_fragment, container, false);
 	    Button takeHint = (Button) rootView.findViewById(R.id.button_take_hint);
 	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_current_task);
-	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_enable_gps);
-	    taskTitleTV =
+//	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_enable_gps);
+        buttonsLayout = (ViewGroup) mainContainer.findViewById(R.id.layout_buttons);
+        taskTitleTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_task_title);
 	    taskDescriptionTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_description);
 	    fillViews();
+        addListeners();
 
 
 	    takeHint.setOnClickListener(new View.OnClickListener() {
@@ -128,7 +138,8 @@ public class CurrentTaskFragment extends Fragment {
             serviceAPI.getNextHint(gameID, taskDTO.getId(), new SimpleNetworkCallback<HintDTO>() {
                 @Override
                 public void onSuccess(HintDTO hintDTO) {
-                    addHint(hintDTO);
+                    //TODO handle
+                addHint(hintDTO);
                 }
             });
             //TODO exc

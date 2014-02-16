@@ -11,6 +11,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 import com.funkyquest.app.api.FQApiActions;
 import com.funkyquest.app.api.FQServiceAPI;
@@ -148,5 +150,15 @@ public class FunkyQuestApplication extends Application {
 			this.value = value;
 		}
 	}
+
+    public static void setViewState(boolean enabled, ViewGroup vg){
+        for (int i = 0; i < vg.getChildCount(); i++){
+            View child = vg.getChildAt(i);
+            child.setEnabled(enabled);
+            if (child instanceof ViewGroup){
+                setViewState(enabled, (ViewGroup) child);
+            }
+        }
+    }
 
 }
