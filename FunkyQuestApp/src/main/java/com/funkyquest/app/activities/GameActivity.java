@@ -1,22 +1,38 @@
 package com.funkyquest.app.activities;
 
 import android.app.*;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.funkyquest.app.FQWebSocketClient;
+import com.funkyquest.app.FunkyQuestApplication;
+import com.funkyquest.app.WebSocketClientListener;
+import com.funkyquest.app.activities.gps.FQLocationListener;
+import com.funkyquest.app.activities.gps.GPSTracker;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
+import com.funkyquest.app.dto.InGameTaskSequenceDTO;
+import com.funkyquest.app.dto.TeamDTO;
+import com.funkyquest.app.util.websockets.WebSocketClient;
 import com.qbix.funkyquest.R;
 
+import java.io.IOException;
 import java.util.Locale;
+import java.util.Set;
 
 public class GameActivity extends Activity implements ActionBar.TabListener {
 
     public static final int TAB_NUMBER = 4;
-    private final ObjectMapper mapper = new ObjectMapper();
+
+	public static final int RESULT_OK = 1;
+
+	private final ObjectMapper mapper = new ObjectMapper();
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -35,42 +51,76 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     private long gameID;
     private GameDTO gameDTO;
     private InGameTaskDTO currentTask;
+	private FQWebSocketClient socketClient;
+	private GPSTracker gpsTracker;
 
-    @Override
+	private View enableTrackingLayout;
+
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 //
-        //TODO uncomment
-//        userID = getIntent().getLongExtra("userID", 1L);
-//        String gameDTOString = getIntent().getStringExtra("gameDTO");
-//        try {
-//            gameDTO = mapper.readValue(gameDTOString, GameDTO.class);
-//        } catch (IOException e) {
-//        }
-//        Set<InGameTaskSequenceDTO> teamTasks = gameDTO.getTeamTasks();
-//        for(InGameTaskSequenceDTO dto:teamTasks){
-//            TeamDTO team = dto.getTeam();
-//            if(team.getTeammates().contains(userID)){
-//                teamID = team.getId();
-//                break;
-//            }
-//        }
-//        FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
-//        serviceAPI.getCurrentTask(gameID, new SimpleNetworkCallback<InGameTaskDTO>() {
-//            @Override
-//            public void onSuccess(InGameTaskDTO arg) {
-//                if (arg == null) {
-//                    //TODO no more tasks, yay
-//                } else {
-//                    currentTask = arg;
-//                }
-//            }
-//            //TODO onexc
-//        });
+	    socketClient = FunkyQuestApplication.getWebSocketClient();
+		socketClient.setSocketLifecycleListener(
+			new WebSocketClientListener.SocketLifeCycleListener() {
+				@Override
+				public void onError(WebSocketClient.Listener.ErrorType errorType,
+				                    Exception exception) {
+					//TODO
+				}
 
-        LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
-        mainLayout.addView(new GameStatsView(this),0,
+				@Override
+				public void onDisconnect(WebSocketClient.Listener.Reason reason,
+				                         String... message) {
+					//TODO
+				}
+
+				@Override
+				public void onConnect() {
+					//TODO
+				}
+			});
+		socketClient.connect();
+
+        userID = getIntent().getLongExtra("userID", -1L);
+        String currentGameJson = getIntent().getStringExtra("currentGame");
+	    String currentTaskJson = getIntent().getStringExtra("currentTask");
+        try {
+            gameDTO = mapper.readValue(currentGameJson, GameDTO.class);
+	        currentTask = mapper.readValue(currentTaskJson,InGameTaskDTO.class);
+        } catch (IOException e) {
+        }
+        Set<InGameTaskSequenceDTO> teamTasks = gameDTO.getTeamTasks();
+        for(InGameTaskSequenceDTO dto:teamTasks){
+            TeamDTO team = dto.getTeam();
+            if(team.getTeammates().contains(userID)){
+                teamID = team.getId();
+                break;
+            }
+        }
+		gameID = gameDTO.getId();
+
+		enableTrackingLayout = findViewById(R.id.layout_enable_gps);
+	    gpsTracker = new GPSTracker(getApplicationContext(),new FQLocationListener(socketClient));
+
+	    boolean trackingEnabled = gpsTracker.startTracker();
+		if(!trackingEnabled){
+			enableTrackingLayout.setVisibility(View.VISIBLE);
+		}
+		Button enableTrackingButton =
+				(Button) enableTrackingLayout.findViewById(R.id.button_enable_tracking);
+		enableTrackingButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				AlertDialog gpsSettingsDialog =
+						GPSTracker.createGpsSettingsDialog(GameActivity.this);
+				gpsSettingsDialog.show();
+			}
+		});
+
+	    LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
+        mainLayout.addView(new GameStatsView(this,currentTask),0,
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -112,6 +162,15 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         }
     }
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == RESULT_OK) {
+			if(requestCode == GPSTracker.REQUEST_CODE){
+				enableTrackingLayout.setVisibility(View.GONE);
+			}
+		}
+	}
 //    @Override
 //    public boolean onCreateOptionsMenu(Menu menu) {
 //        // Inflate the menu; this adds items to the action bar if it is present.
@@ -130,6 +189,19 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 //        }
 //        return super.onOptionsItemSelected(item);
 //    }
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		gpsTracker.startTracker();
+	}
+
+	/* Remove the locationlistener updates when Activity is paused */
+	@Override
+	protected void onPause() {
+		super.onPause();
+		gpsTracker.stopTracker();
+	}
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
@@ -160,7 +232,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
             chatFragment = new ChatFragment("LOLCHAT");
-            currentTaskFragment = new CurrentTaskFragment(gameID, currentTask);
+            currentTaskFragment = new CurrentTaskFragment(gameID, currentTask,socketClient);
             gameInfoFragment = new GameInfoFragment("GAMEINFO");
             mapFragment = new MapFragment("MAP");
         }

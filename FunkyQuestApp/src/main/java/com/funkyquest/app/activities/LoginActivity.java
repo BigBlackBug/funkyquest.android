@@ -22,6 +22,7 @@ import com.funkyquest.app.api.FQServiceAPI;
 import com.funkyquest.app.api.LoginCredentials;
 import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
+import com.funkyquest.app.dto.InGameTaskDTO;
 import com.qbix.funkyquest.R;
 
 import java.util.Properties;
@@ -202,6 +203,54 @@ public class LoginActivity extends Activity {
         }
     }
 
+	private class StartGameActivity implements NetworkCallback<InGameTaskDTO> {
+
+		private final Long userID;
+
+		private final GameDTO currentGame;
+
+		private StartGameActivity(Long userID, GameDTO currentGame) {
+			this.userID = userID;
+			this.currentGame = currentGame;
+		}
+
+		@Override
+		public void onSuccess(InGameTaskDTO currentTask) {
+			if (currentTask == null) {
+				//TODO no more tasks, yay
+			} else {
+				Intent intent = new Intent(LoginActivity.this,GameActivity.class);
+				intent.putExtra("userID", userID);
+				try {
+					intent.putExtra("currentGame", mapper.writeValueAsString(currentGame));
+					intent.putExtra("currentTask", mapper.writeValueAsString(currentTask));
+				} catch (JsonProcessingException e) {
+
+				}
+
+				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+				startActivity(intent);
+				finish();
+			}
+		}
+
+		@Override
+		public void onException(Exception ex) {
+
+		}
+
+		@Override
+		public void onApplicationError(int errorCode) {
+
+		}
+
+		@Override
+		public void onPostExecute() {
+
+		}
+		//TODO onexc
+	}
+
     private class LoginCallback implements NetworkCallback<Long> {
         private FQServiceAPI serviceAPI;
 
@@ -218,21 +267,14 @@ public class LoginActivity extends Activity {
             //here it will have all the needed cookies
             serviceAPI.getCurrentGame(new NetworkCallback<GameDTO>() {
                 @Override
-                public void onSuccess(GameDTO currentGame) {
+                public void onSuccess(final GameDTO currentGame) {
                     if (currentGame == null) {
                         //TODO show list of available games
                     } else {
-                        //TODO show main activity
-                        Intent intent = new Intent(LoginActivity.this, GameActivity.class);
-                        intent.putExtra("userID", userID);
-                        try {
-                            intent.putExtra("gameDTO", mapper.writeValueAsString(currentGame));
-                        } catch (JsonProcessingException e) {
-
-                        }
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        finish();
+	                    FQServiceAPI serviceAPI =
+			                    FunkyQuestApplication.getServiceAPI();
+	                    serviceAPI.getCurrentTask(currentGame.getId(),
+	                                              new StartGameActivity(userID,currentGame));
                     }
                 }
 

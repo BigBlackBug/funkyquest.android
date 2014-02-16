@@ -1,4 +1,4 @@
-package util;
+package com.funkyquest.app.util;
 
 import android.content.Context;
 import com.funkyquest.app.FunkyQuestApplication;

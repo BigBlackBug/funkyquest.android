@@ -10,7 +10,13 @@ import java.net.URL;
 /**
  * Created by bigblackbug on 1/28/14.
  */
-enum FQApiActions {
+public enum FQApiActions {
+    CONNECT_TO_WEBSOCKET(""/*TODO*/){
+        @Override
+        public URI createURI(String host, int port, Object... args) {
+            return createURI("wss",host,port,args);
+        }
+    },
     LOGIN("/api/login"),
     ACTIVE_GAME("/api/activeGames"),
     CURRENT_TASK("/api/activeGames/%s/task"),
@@ -26,9 +32,13 @@ enum FQApiActions {
         return path;
     }
 
-    public URI createURI(String host, int port, Object... args) {
+    public URI createURI(String host, int port, Object... args){
+        return createURI("http",host, port, args);
+    }
+
+    protected URI createURI(String protocol, String host, int port, Object... args) {
         try {
-            return new URL("http", host, port, String.format(getPath(), args)).toURI();
+            return new URL(protocol, host, port, String.format(getPath(), args)).toURI();
         } catch (URISyntaxException e) {
             throw new FunkyQuestException("URI error. Will never be thrown");
         } catch (MalformedURLException e) {

@@ -2,4 +2,5 @@
 <resources>
     <string name="answer_task">Ответить</string>
     <string name="take_hint">Взять подсказку</string>
+    <string name="enable_tracking">Включить WiFi или GPS</string>
 </resources>

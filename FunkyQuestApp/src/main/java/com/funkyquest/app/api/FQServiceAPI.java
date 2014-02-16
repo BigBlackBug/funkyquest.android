@@ -88,7 +88,6 @@ public class FQServiceAPI {
         }, loginCallback));
     }
 
-    //TODO какого хрена тут пост ваще?
     public void getNextHint(long gameID, long taskID, NetworkCallback<HintDTO> callback) throws UserNotLoggedInException {
         checkLoginStatus();
         URI uri = FQApiActions.TAKE_NEXT_HINT.createURI(serverAddress, serverPort, gameID, taskID);

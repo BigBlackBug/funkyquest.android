@@ -2,7 +2,7 @@
 <resources>
     <string name="task_price">Таска стоит %1$s очков</string>
     <string name="score">У тебя %1$s очков</string>
-    <string name="task_index">Это %1%s таска из %1%s</string>
-    <string name="hints_used">Ты использовал %1%s подсказок из %2%s</string>
+    <string name="task_index">Это %1$s таска из %1$s</string>
+    <string name="hints_used">Ты использовал %1$s подсказок из %2$s</string>
     <string name="time_in_game">Время в игре: %1$s</string>
 </resources>

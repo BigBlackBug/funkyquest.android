@@ -12,99 +12,141 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+import com.funkyquest.app.api.FQApiActions;
 import com.funkyquest.app.api.FQServiceAPI;
+import com.funkyquest.app.util.websockets.WebSocketClient;
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.util.Collections;
 import java.util.Properties;
 
 public class FunkyQuestApplication extends Application {
-    public static final String DEFAULT_PROPERTIES_FILE = "properties.properties";
-    private static Context context;
 
-    public static Context getGlobalApplicationContext() {
-        return context;
-    }
+	public static final String DEFAULT_PROPERTIES_FILE =
+			"properties.properties";
 
-    private static FQServiceAPI serviceAPI;
+	private static Context context;
 
-    public static FQServiceAPI getServiceAPI() {
-        if(serviceAPI == null){
-            Properties properties = getDefaultProperties(context);
-            String serverHost = properties.getProperty("server_host");
-            int serverPort = Integer.parseInt(properties.getProperty("server_port"));
-            serviceAPI = new FQServiceAPI(serverHost, serverPort);
-        }
-        return serviceAPI;
-    }
+	private static String serverHost;
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        Log.d("APP", "creating application");
-        context = getApplicationContext();
-    }
+	private static int serverPort;
 
-    public static Properties getProperties(String file, Context context) {
-        Properties properties = new Properties();
-        try {
-            AssetManager assetManager = context.getAssets();
-            InputStream inputStream = assetManager.open(file);
-            properties.load(inputStream);
-        } catch (IOException e) {
-            Log.e("PropertyReader", e.toString());
-        }
-        return properties;
-    }
+	private static FQServiceAPI serviceAPI;
 
-    public static Properties getDefaultProperties(Context context) {
-        return getProperties(DEFAULT_PROPERTIES_FILE, context);
-    }
+	private static FQWebSocketClient socketClient;
 
-    public enum Duration {
-        LONG(Toast.LENGTH_LONG),
-        SHORT(Toast.LENGTH_SHORT);
-        private int value;
+	public static Context getGlobalApplicationContext() {
+		return context;
+	}
 
-        private Duration(int value) {
-            this.value = value;
-        }
-    }
+	public static int getServerPort() {
+		return serverPort;
+	}
 
-    public static void showToast(final Activity activity, final String text,
-                                 final Duration duration) {
-        activity.runOnUiThread(new Runnable() {
+	public static String getServerHost() {
+		return serverHost;
+	}
 
-            @Override
-            public void run() {
-                Toast.makeText(activity, text, duration.value).show();
-            }
-        });
-    }
+	public static FQWebSocketClient getSocketClient() {
+		return socketClient;
+	}
 
-    public static Drawable scaleDrawable(Resources resources, Drawable source,
-                                         double scaleX, double scaleY) {
-        Bitmap bitmap = ((BitmapDrawable) source).getBitmap();
-        int bw = bitmap.getWidth();
-        int bh = bitmap.getHeight();
-        return new BitmapDrawable(resources,
-                Bitmap.createScaledBitmap(bitmap,
-                        (int) (bw * scaleX),
-                        (int) (bh * scaleY), true));
-    }
+	public static FQServiceAPI getServiceAPI() {
+		if (serviceAPI == null) {
+			Properties properties = getDefaultProperties(context);
+			serverHost = properties.getProperty("server_host");
+			serverPort =
+					Integer.parseInt(properties.getProperty("server_port"));
+			serviceAPI = new FQServiceAPI(serverHost, serverPort);
+		}
+		return serviceAPI;
+	}
 
-    public static void closeActivityAfterDelay(final Activity activity, int delay) {
-        postToMainThreadAfterDelay(new Runnable() {
+	public static FQWebSocketClient getWebSocketClient() {
+		if (socketClient == null) {
+			URI uri = FQApiActions.CONNECT_TO_WEBSOCKET.createURI(serverHost,
+			                                                      serverPort);
+			WebSocketClientListener listener = new WebSocketClientListener();
+			WebSocketClient webSocketClient = new WebSocketClient(uri, listener, Collections
+					.<BasicNameValuePair>emptyList());
+			socketClient = new FQWebSocketClient(webSocketClient,listener);
+		}
+		return socketClient;
+	}
 
-            @Override
-            public void run() {
-                activity.finish();
-            }
-        }, delay);
-    }
+	public static Properties getProperties(String file, Context context) {
+		Properties properties = new Properties();
+		try {
+			AssetManager assetManager = context.getAssets();
+			InputStream inputStream = assetManager.open(file);
+			properties.load(inputStream);
+		} catch (IOException e) {
+			Log.e("PropertyReader", e.toString());
+		}
+		return properties;
+	}
 
-    public static void postToMainThreadAfterDelay(Runnable action, int delay) {
-        new Handler(Looper.getMainLooper()).postDelayed(action, delay);
-    }
+	public static Properties getDefaultProperties(Context context) {
+		return getProperties(DEFAULT_PROPERTIES_FILE, context);
+	}
+
+	public static void showToast(final Activity activity, final String text,
+	                             final Duration duration) {
+		activity.runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				Toast.makeText(activity, text, duration.value).show();
+			}
+		});
+	}
+
+	public static Drawable scaleDrawable(Resources resources, Drawable source,
+	                                     double scaleX, double scaleY) {
+		Bitmap bitmap = ((BitmapDrawable) source).getBitmap();
+		int bw = bitmap.getWidth();
+		int bh = bitmap.getHeight();
+		return new BitmapDrawable(resources,
+		                          Bitmap.createScaledBitmap(bitmap,
+		                                                    (int) (bw * scaleX),
+		                                                    (int) (bh * scaleY),
+		                                                    true));
+	}
+
+	public static void closeActivityAfterDelay(final Activity activity,
+	                                           int delay) {
+		postToMainThreadAfterDelay(new Runnable() {
+
+			@Override
+			public void run() {
+				activity.finish();
+			}
+		}, delay);
+	}
+
+	public static void postToMainThreadAfterDelay(Runnable action, int delay) {
+		new Handler(Looper.getMainLooper()).postDelayed(action, delay);
+	}
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		Log.d("APP", "creating application");
+		context = getApplicationContext();
+	}
+
+	public enum Duration {
+		LONG(Toast.LENGTH_LONG),
+		SHORT(Toast.LENGTH_SHORT);
+
+		private int value;
+
+		private Duration(int value) {
+			this.value = value;
+		}
+	}
 
 }

@@ -4,7 +4,20 @@
         android:orientation="vertical"
         android:layout_height="match_parent"
         android:layout_width="match_parent">
-
+    <LinearLayout
+            android:id="@+id/layout_enable_gps"
+            android:visibility="gone"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="5dp">
+        <Button
+                android:id="@+id/button_enable_tracking"
+                android:text="@string/enable_tracking"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="fill_parent"/>
+    </LinearLayout>
     <android.support.v4.view.ViewPager
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
