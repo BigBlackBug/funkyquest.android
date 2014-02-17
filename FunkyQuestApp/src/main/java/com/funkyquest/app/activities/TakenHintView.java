@@ -1,6 +1,7 @@
 package com.funkyquest.app.activities;
 
 import android.content.Context;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -10,12 +11,8 @@ import com.funkyquest.app.R;
 
 public class TakenHintView extends LinearLayout {
 
-//    private View mValue;
-//    private ImageView mImage;
-
     public TakenHintView(Context context, HintDTO hintDTO) {
         super(context);
-
         //TODO fill with data
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -24,8 +21,10 @@ public class TakenHintView extends LinearLayout {
 
         hintTitleTV.setText(hintDTO.getName());
         TextView hintTextTV = (TextView) mainView.findViewById(R.id.tv_hint_text);
-//        hintTextTV.setText(hintDTO.getText());
-
+        hintTextTV.setText(hintDTO.getText());
     }
 
+	public TakenHintView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+	}
 }

@@ -18,12 +18,12 @@ import android.widget.TextView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.FunkyQuestApplication;
+import com.funkyquest.app.R;
 import com.funkyquest.app.api.FQServiceAPI;
 import com.funkyquest.app.api.LoginCredentials;
 import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
-import com.funkyquest.app.R;
 
 import java.util.Properties;
 
@@ -113,8 +113,7 @@ public class LoginActivity extends Activity {
 //        if (mAuthTask != null) {
 //            return;
 //        }
-
-        // Reset errors.
+	    // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
@@ -246,7 +245,7 @@ public class LoginActivity extends Activity {
 
 		@Override
 		public void onPostExecute() {
-
+			showProgress(false);
 		}
 		//TODO onexc
 	}
@@ -269,6 +268,9 @@ public class LoginActivity extends Activity {
                 @Override
                 public void onSuccess(final GameDTO currentGame) {
                     if (currentGame == null) {
+	                    FunkyQuestApplication.showToast(LoginActivity.this,"GAME=null",
+	                                                    FunkyQuestApplication.Duration.LONG);
+	                    showProgress(false);
                         //TODO show list of available games
                     } else {
 	                    FQServiceAPI serviceAPI =
@@ -280,6 +282,7 @@ public class LoginActivity extends Activity {
 
                 @Override
                 public void onException(Exception ex) {
+	                showProgress(false);
                     //TODO
                 }
 
@@ -290,13 +293,14 @@ public class LoginActivity extends Activity {
 
                 @Override
                 public void onPostExecute() {
-
                 }
             });
         }
 
         @Override
         public void onException(Exception ex) {
+	        showProgress(false);
+	        //TODO analyze exception
             mPasswordView
                     .setError(getString(R.string.error_incorrect_password));
             mPasswordView.requestFocus();
@@ -311,7 +315,6 @@ public class LoginActivity extends Activity {
         @Override
         public void onPostExecute() {
 //            mAuthTask = null;
-            showProgress(false);
         }
     }
 

@@ -3,8 +3,10 @@ package com.funkyquest.app.activities;
 import android.app.*;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -20,6 +22,7 @@ import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
 import com.funkyquest.app.dto.InGameTaskSequenceDTO;
 import com.funkyquest.app.dto.TeamDTO;
+import com.funkyquest.app.util.RequestCodes;
 import com.funkyquest.app.util.websockets.WebSocketClient;
 
 import java.io.IOException;
@@ -30,7 +33,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
     public static final int TAB_NUMBER = 4;
 
-	public static final int RESULT_OK = 1;
+//	public static final int RESULT_OK = 1;
 
 	private final ObjectMapper mapper = new ObjectMapper();
     /**
@@ -56,11 +59,12 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
 	private View enableTrackingLayout;
 
+	private GameStatsView gameStatsView;
+
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//
 	    socketClient = FunkyQuestApplication.getWebSocketClient();
 		socketClient.setSocketLifecycleListener(
 			new WebSocketClientListener.SocketLifeCycleListener() {
@@ -87,8 +91,11 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         String currentGameJson = getIntent().getStringExtra("currentGame");
 	    String currentTaskJson = getIntent().getStringExtra("currentTask");
         try {
+	        long before = SystemClock.uptimeMillis();
             gameDTO = mapper.readValue(currentGameJson, GameDTO.class);
 	        currentTask = mapper.readValue(currentTaskJson,InGameTaskDTO.class);
+	        Log.i("Response", "Deserializing dto's in GameActivity.onCreate took " +
+			        (SystemClock.uptimeMillis() - before) + "ms");
         } catch (IOException e) {
         }
         Set<InGameTaskSequenceDTO> teamTasks = gameDTO.getTeamTasks();
@@ -120,7 +127,8 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 		});
 
 	    LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
-        mainLayout.addView(new GameStatsView(this,currentTask),0,
+		gameStatsView = new GameStatsView(this, currentTask, gameDTO.getStartDate());
+		mainLayout.addView(gameStatsView,0,
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -165,9 +173,16 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if (resultCode == RESULT_OK) {
-			if(requestCode == GPSTracker.REQUEST_CODE){
-				enableTrackingLayout.setVisibility(View.GONE);
+		if(requestCode == RequestCodes.OPEN_GPS_SETTINGS_REQUEST_CODE){
+			if (resultCode == RESULT_OK) {
+				boolean trackingEnabled = gpsTracker.startTracker();
+				enableTrackingLayout.setVisibility(trackingEnabled ? View.GONE : View.VISIBLE);
+			}
+		} else if (requestCode == RequestCodes.TAKE_PICTURE_REQUEST_CODE) {
+			if (resultCode == RESULT_OK) {
+//				Bundle extras = data.getExtras();
+//				Bitmap thumbnail = (Bitmap) extras.get("data");
+				mSectionsPagerAdapter.currentTaskFragment.showSendImageDialog();
 			}
 		}
 	}
@@ -232,7 +247,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
             chatFragment = new ChatFragment("LOLCHAT");
-            currentTaskFragment = new CurrentTaskFragment(gameID, currentTask,socketClient);
+            currentTaskFragment = new CurrentTaskFragment(gameID, currentTask, socketClient,gameStatsView);
             gameInfoFragment = new GameInfoFragment("GAMEINFO");
             mapFragment = new MapFragment("MAP");
         }

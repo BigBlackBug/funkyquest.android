@@ -1,6 +1,8 @@
 package com.funkyquest.app.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.funkyquest.app.api.progress.MultipartEntityWithListener;
+import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.api.utils.Request;
 import com.funkyquest.app.api.utils.Response;
 import org.apache.http.HttpResponse;
@@ -10,10 +12,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -40,7 +44,7 @@ class RestService {
             T reqData = requestData.getRequestData();
             String entityData;
             if (reqData == null) {
-                entityData = "";
+                entityData = "{}";
             } else {
                 entityData = mapper.writeValueAsString(reqData);
             }
@@ -55,6 +59,19 @@ class RestService {
         String responseString = responseToString(response);
         return new Response(response.getStatusLine(), responseString);
     }
+
+	public Response upload(Request<String> requestData, WriteListener writeListener)
+			throws IOException {
+		HttpPost request = new HttpPost(requestData.getUri());
+
+		File file = new File(requestData.getRequestData());
+		MultipartEntityWithListener entity = new MultipartEntityWithListener(writeListener);
+		entity.addPart("file", new FileBody(file));
+		request.setEntity(entity);
+		HttpResponse response = httpClient.execute(request, httpContext);
+		String responseString = responseToString(response);
+		return new Response(response.getStatusLine(), responseString);
+	}
 
     public Response get(Request<Map<String, String>> requestData)
             throws IOException {

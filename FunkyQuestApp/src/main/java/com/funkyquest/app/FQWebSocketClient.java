@@ -45,4 +45,8 @@ public class FQWebSocketClient {
 			//never happens
 		}
 	}
+
+	public boolean isConnected() {
+		return socketClient.isConnected();
+	}
 }

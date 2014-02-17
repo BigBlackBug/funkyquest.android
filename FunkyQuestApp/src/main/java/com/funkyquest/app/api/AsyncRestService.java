@@ -2,6 +2,7 @@ package com.funkyquest.app.api;
 
 import android.os.AsyncTask;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.api.utils.AsyncRequest;
 import com.funkyquest.app.api.utils.Request;
 import com.funkyquest.app.api.utils.Response;
@@ -35,6 +36,11 @@ public class AsyncRestService {
     public <Req, Resp> void post(AsyncRequest<Req, Resp> request) {
         new AsyncPostRequestTask<Req, Resp>(restService).execute(request);
     }
+
+	@SuppressWarnings("unchecked")
+	public <Resp> void upload(AsyncRequest<String, Resp> request,WriteListener writeListener) {
+		new AsyncUploadRequestTask<Resp>(restService,writeListener).execute(request);
+	}
 
     private static abstract class AsyncRequestTask<
             Req, Resp> extends AsyncTask<AsyncRequest<Req, Resp>, Void, Response> {
@@ -75,7 +81,7 @@ public class AsyncRestService {
                         try {
                             responseValue = response.convertTo(responseType);
                         } catch (IOException e) {
-                            callback.onException(exception);
+                            callback.onException(e);
                             return;
                         }
                         callback.onSuccess(responseValue);
@@ -100,13 +106,29 @@ public class AsyncRestService {
         }
     }
 
-    private static final class AsyncGetRequestTask<T> extends AsyncRequestTask<Map<String, String>, T> {
-        private AsyncGetRequestTask(RestService restService) {
-            super(restService);
-        }
+	private static final class AsyncUploadRequestTask<T> extends AsyncRequestTask<String, T> {
 
-        @Override
-        protected Response executeMethod(Request<Map<String, String>> request) throws Exception {
+		private final WriteListener writeListener;
+
+		private AsyncUploadRequestTask(RestService restService, WriteListener writeListener) {
+			super(restService);
+			this.writeListener = writeListener;
+		}
+
+		@Override
+		protected Response executeMethod(Request<String> request) throws Exception {
+			return restService.upload(request, writeListener);
+		}
+	}
+
+	private static final class AsyncGetRequestTask<T> extends AsyncRequestTask<Map<String, String>, T> {
+
+		private AsyncGetRequestTask(RestService restService) {
+			super(restService);
+		}
+
+		@Override
+		protected Response executeMethod(Request<Map<String, String>> request) throws Exception {
             return restService.get(request);
         }
     }

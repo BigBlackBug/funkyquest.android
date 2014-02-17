@@ -4,7 +4,8 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              android:padding="10dp">
+              android:padding="10dp"
+              android:background="@drawable/taken_hint_border">
 
     <TextView
             android:id="@+id/tv_hint_title"

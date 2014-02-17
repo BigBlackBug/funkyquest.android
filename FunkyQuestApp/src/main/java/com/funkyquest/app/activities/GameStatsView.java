@@ -1,84 +1,119 @@
 package com.funkyquest.app.activities;
 
 import android.content.Context;
-import android.util.AttributeSet;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.funkyquest.app.dto.InGameTaskDTO;
 import com.funkyquest.app.R;
+import com.funkyquest.app.dto.InGameTaskDTO;
+import com.funkyquest.app.dto.TaskDTO;
+
+import java.util.Date;
 
 /**
  * Created by bigblackbug on 2/3/14.
  */
 public class GameStatsView extends LinearLayout {
-    private TextView taskPriceTV;
-    private TextView scoreTV;
-    private TextView hintsUsedTV;
-    private TextView taskIndexTV;
-    private ViewGroup mainLayout;
-    private int taskPrice;
-    private int taskIndex = 1;
-    private int score = 0;
-    private int usedHintNumber = 0;
-    private TextView timeInGameTV;
-    private Context context;
 
-    public GameStatsView(Context context, InGameTaskDTO taskDTO) {
-        super(context);
-        this.context = context;
-        this.taskPrice = taskDTO.getOriginalTask().getPoints();
-        LayoutInflater inflater = (LayoutInflater) context
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        ViewGroup mainLayout = (ViewGroup) inflater.inflate(R.layout.game_stats_view, this, true);
-        this.mainLayout = mainLayout;
-        timeInGameTV = (TextView) mainLayout.findViewById(R.id.tv_time_in_game);
-        taskIndexTV = (TextView) mainLayout.findViewById(R.id.tv_task_index);
-        hintsUsedTV = (TextView) mainLayout.findViewById(R.id.tv_hints_used);
-        scoreTV = (TextView) mainLayout.findViewById(R.id.tv_score);
-        taskPriceTV = (TextView) mainLayout.findViewById(R.id.tv_task_price);
-    }
+	private final Date gameStartDate;
 
-    public void setScore(int score) {
-        this.score = score;
-        scoreTV.setText(context.getString(R.string.score, score));
-    }
+	private final Handler handler = new Handler();
 
-    public void setTaskIndex(int taskIndex) {
-        this.taskIndex = taskIndex;
-        taskIndexTV.setText(context.getString(R.string.task_index, taskIndex));
-    }
+	private final Runnable updateTimerMethod = new Runnable() {
 
-    public void setTaskPrice(int taskPrice) {
-        this.taskPrice = taskPrice;
-        taskPriceTV.setText(context.getString(R.string.task_price, taskPrice));
-    }
+		public void run() {
+			long millis = System.currentTimeMillis() - gameStartDate.getTime();
+			long seconds = (millis / 1000) % 60;
+			long minutes = (millis / (1000 * 60)) % 60;
+			long hours = (millis / (1000 * 60 * 60)) % 24;
 
-    public void setUsedHintNumber(int usedHintNumber) {
-        this.usedHintNumber = usedHintNumber;
-        hintsUsedTV.setText(context.getString(R.string.hints_used, usedHintNumber));
-    }
+			String timeString = context.getString(R.string.time_in_game,
+			                                      String.format("%02dч:%02dм:%02dс", hours,
+			                                                    minutes, seconds));
+			timeInGameTV.setText(timeString);
+			handler.postDelayed(this, 100);
+		}
+	};
 
-    public GameStatsView(Context context, AttributeSet attrs) {
-        super(context, null);
-    }
+	private TextView taskPriceTV;
 
-//    private Runnable updateTimerMethod = new Runnable() {
-//
-//        public void run() {
-//            timeInMillies = SystemClock.uptimeMillis()–startTime;
-//            finalTime = timeSwap + timeInMillies;
-//
-//            int seconds = (int) (finalTime / 1000);
-//            int minutes = seconds / 60;
-//            seconds = seconds % 60;
-//            int milliseconds = (int) (finalTime % 1000);
-//            textTimer.setText(“” + minutes +“:”
-//            +String.format(“ % 02d”,seconds)+“:”
-//            +String.format(“ % 03d”,milliseconds));
-//            myHandler.postDelayed(this, 0);
-//        }
-//
-//    };
+	private TextView scoreTV;
+
+	private TextView hintsUsedTV;
+
+	private TextView taskIndexTV;
+
+	private ViewGroup mainLayout;
+
+	private int taskPrice;
+
+	private int taskIndex = 1;
+
+	private int score = 0;
+
+	private int usedHintNumber = 0;
+
+	private TextView timeInGameTV;
+
+	private Context context;
+
+	private int totalHintNumber = 0;
+
+	public GameStatsView(Context context, InGameTaskDTO taskDTO, Date gameStartDate) {
+		super(context);
+		this.context = context;
+		this.gameStartDate = gameStartDate;
+		LayoutInflater inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		ViewGroup mainLayout = (ViewGroup) inflater.inflate(R.layout.game_stats_view, this, true);
+		this.mainLayout = mainLayout;
+		timeInGameTV = (TextView) mainLayout.findViewById(R.id.tv_time_in_game);
+		taskIndexTV = (TextView) mainLayout.findViewById(R.id.tv_task_index);
+		hintsUsedTV = (TextView) mainLayout.findViewById(R.id.tv_hints_used);
+		scoreTV = (TextView) mainLayout.findViewById(R.id.tv_score);
+		taskPriceTV = (TextView) mainLayout.findViewById(R.id.tv_task_price);
+		TaskDTO originalTask = taskDTO.getOriginalTask();
+		setTaskPrice(originalTask.getPoints());
+		setTaskIndex(1);
+		setUsedHintNumber(taskDTO.getUsedHintIds().size(),
+		                  originalTask.getHints().size());
+		setScore(0);
+		handler.post(updateTimerMethod);
+	}
+
+	private void setScore(int score) {
+		this.score = score;
+		scoreTV.setText(context.getString(R.string.score, score));
+	}
+
+	public void increaseScore(int value) {
+		setScore(score + value);
+	}
+
+	private void setTaskIndex(int taskIndex) {
+		this.taskIndex = taskIndex;
+		taskIndexTV.setText(context.getString(R.string.task_index, taskIndex));
+	}
+
+	public void increaseTaskIndex() {
+		setTaskIndex(taskIndex + 1);
+	}
+
+	public void setTaskPrice(int taskPrice) {
+		this.taskPrice = taskPrice;
+		taskPriceTV.setText(context.getString(R.string.task_price, taskPrice));
+	}
+
+	public void increaseUsedHintNumber() {
+		setUsedHintNumber(usedHintNumber + 1, totalHintNumber);
+	}
+
+	private void setUsedHintNumber(int usedHintNumber, int totalHintNumber) {
+		this.usedHintNumber = usedHintNumber;
+		this.totalHintNumber = totalHintNumber;
+		hintsUsedTV
+				.setText(context.getString(R.string.hints_used, usedHintNumber, totalHintNumber));
+	}
 }

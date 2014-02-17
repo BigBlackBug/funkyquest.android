@@ -19,8 +19,10 @@ public class FQLocationListener implements LocationListener {
 
 	@Override
 	public void onLocationChanged(Location location) {
-		socketClient.sendLocation(
-				new PlayerLocationDTO(location.getLatitude(), location.getLongitude()));
+		if(socketClient.isConnected()){
+			socketClient.sendLocation(
+					new PlayerLocationDTO(location.getLatitude(), location.getLongitude()));
+		}
 	}
 
 	@Override

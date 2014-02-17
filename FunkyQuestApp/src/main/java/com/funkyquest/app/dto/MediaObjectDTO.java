@@ -50,4 +50,7 @@ public class MediaObjectDTO extends AbstractDTO {
         this.uuid = uuid;
     }
 
+	public Date getDeleted() {
+		return deleted;
+	}
 }

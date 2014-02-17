@@ -8,5 +8,8 @@
     <string name="gameinfo_fragment_title">Информация об игре</string>
     <string name="chat_gragment_title">Чат с админом</string>
     <string name="hints">Подсказки</string>
+    <string name="enter_answer_dialog_title">Введите ответ</string>
+    <string name="answer_dialog_confirm">Отправить</string>
+    <string name="answer_dialog_cancel">Отменить</string>
 
 </resources>
