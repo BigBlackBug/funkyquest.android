@@ -2,6 +2,7 @@ package com.funkyquest.app.activities;
 
 import android.app.*;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v13.app.FragmentPagerAdapter;
@@ -33,8 +34,6 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
     public static final int TAB_NUMBER = 4;
 
-//	public static final int RESULT_OK = 1;
-
 	private final ObjectMapper mapper = new ObjectMapper();
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -65,53 +64,36 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-	    socketClient = FunkyQuestApplication.getWebSocketClient();
+		socketClient = FunkyQuestApplication.getWebSocketClient(userID);
 		socketClient.setSocketLifecycleListener(
-			new WebSocketClientListener.SocketLifeCycleListener() {
-				@Override
-				public void onError(WebSocketClient.Listener.ErrorType errorType,
-				                    Exception exception) {
-					//TODO
-				}
+				new WebSocketClientListener.SocketLifeCycleListener() {
+					private static final String TAG = "websocketlistener";
+					@Override
+					public void onError(WebSocketClient.Listener.ErrorType errorType,
+					                    Exception exception) {
+						Log.i(TAG,"error "+errorType,exception);
+						//TODO
+					}
 
-				@Override
-				public void onDisconnect(WebSocketClient.Listener.Reason reason,
-				                         String... message) {
-					//TODO
-				}
+					@Override
+					public void onDisconnect(WebSocketClient.Listener.Reason reason,
+					                         String... message) {
+						Log.i(TAG,"disconnected "+reason);
+						//TODO
+					}
 
-				@Override
-				public void onConnect() {
-					//TODO
-				}
-			});
+					@Override
+					public void onConnect() {
+						Log.i(TAG,"connected");
+						//TODO
+					}
+				});
 //		socketClient.connect();
 
-        userID = getIntent().getLongExtra("userID", -1L);
-        String currentGameJson = getIntent().getStringExtra("currentGame");
-	    String currentTaskJson = getIntent().getStringExtra("currentTask");
-        try {
-	        long before = SystemClock.uptimeMillis();
-            gameDTO = mapper.readValue(currentGameJson, GameDTO.class);
-	        currentTask = mapper.readValue(currentTaskJson,InGameTaskDTO.class);
-	        Log.i("Response", "Deserializing dto's in GameActivity.onCreate took " +
-			        (SystemClock.uptimeMillis() - before) + "ms");
-        } catch (IOException e) {
-        }
-        Set<InGameTaskSequenceDTO> teamTasks = gameDTO.getTeamTasks();
-        for(InGameTaskSequenceDTO dto:teamTasks){
-            TeamDTO team = dto.getTeam();
-            if(team.getTeammates().contains(userID)){
-                teamID = team.getId();
-                break;
-            }
-        }
-		gameID = gameDTO.getId();
-
 		enableTrackingLayout = findViewById(R.id.layout_enable_gps);
-	    gpsTracker = new GPSTracker(getApplicationContext(),new FQLocationListener(socketClient));
+		gpsTracker = new GPSTracker(getApplicationContext(),new FQLocationListener(socketClient));
 
-	    boolean trackingEnabled = gpsTracker.startTracker();
+		boolean trackingEnabled = gpsTracker.startTracker();
 		if(!trackingEnabled){
 			enableTrackingLayout.setVisibility(View.VISIBLE);
 		}
@@ -126,58 +108,97 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 			}
 		});
 
-	    LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
-		gameStatsView = new GameStatsView(this, currentTask, gameDTO.getStartDate());
-		mainLayout.addView(gameStatsView,0,
-                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
+		final View pbLayout = findViewById(R.id.preparing_activity_status);
+		final GameActivity activity=this;
+		new AsyncTask<Void,Void,Void>(){
 
-        // Set up the action bar.
-        final ActionBar actionBar = getActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayShowHomeEnabled(false);
+			@Override
+			protected Void doInBackground(Void... params) {
+				userID = getIntent().getLongExtra("userID", -1L);
+				String currentGameJson = getIntent().getStringExtra("currentGame");
+				String currentTaskJson = getIntent().getStringExtra("currentTask");
+				try {
+					long before = SystemClock.uptimeMillis();
+					gameDTO = mapper.readValue(currentGameJson, GameDTO.class);
+					currentTask = mapper.readValue(currentTaskJson,InGameTaskDTO.class);
+					Log.i("Response", "Deserializing dto's in GameActivity.onCreate took " +
+							(SystemClock.uptimeMillis() - before) + "ms");
+				} catch (IOException e) {
+				}
+				Set<InGameTaskSequenceDTO> teamTasks = gameDTO.getTeamTasks();
+				for(InGameTaskSequenceDTO dto:teamTasks){
+					TeamDTO team = dto.getTeam();
+					if(team.getTeammates().contains(userID)){
+						teamID = team.getId();
+						break;
+					}
+				}
+				gameID = gameDTO.getId();
+				gameStatsView = new GameStatsView(activity, currentTask, gameDTO.getStartDate());
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
+						mainLayout.addView(gameStatsView, 0,
+						                   new LinearLayout.LayoutParams(
+								                   LinearLayout.LayoutParams.MATCH_PARENT,
+								                   ViewGroup.LayoutParams.WRAP_CONTENT));
+					}
+				});
+				// Set up the action bar.
+				final ActionBar actionBar = getActionBar();
+				actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+				actionBar.setDisplayShowTitleEnabled(false);
+				actionBar.setDisplayShowHomeEnabled(false);
 
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
+				// Create the adapter that will return a fragment for each of the three
+				// primary sections of the activity.
+				mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setOffscreenPageLimit(TAB_NUMBER);
+				// Set up the ViewPager with the sections adapter.
+				mViewPager = (ViewPager) findViewById(R.id.pager);
+				mViewPager.setAdapter(mSectionsPagerAdapter);
+				mViewPager.setOffscreenPageLimit(TAB_NUMBER);
 
-        // When swiping between different sections, select the corresponding
-        // tab. We can also use ActionBar.Tab#select() to do this if we have
-        // a reference to the Tab.
-        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                actionBar.setSelectedNavigationItem(position);
-            }
-        });
+				// When swiping between different sections, select the corresponding
+				// tab. We can also use ActionBar.Tab#select() to do this if we have
+				// a reference to the Tab.
+				mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+					@Override
+					public void onPageSelected(int position) {
+						actionBar.setSelectedNavigationItem(position);
+					}
+				});
 
-        // For each of the sections in the app, add a tab to the action bar.
-        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-            // Create a tab with text corresponding to the page title defined by
-            // the adapter. Also specify this Activity object, which implements
-            // the TabListener interface, as the callback (listener) for when
-            // this tab is selected.
-            actionBar.addTab(
-                    actionBar.newTab()
-                            .setText(mSectionsPagerAdapter.getPageTitle(i))
-                            .setTabListener(this));
-        }
+				// For each of the sections in the app, add a tab to the action bar.
+				for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+					// Create a tab with text corresponding to the page title defined by
+					// the adapter. Also specify this Activity object, which implements
+					// the TabListener interface, as the callback (listener) for when
+					// this tab is selected.
+					actionBar.addTab(
+							actionBar.newTab()
+									.setText(mSectionsPagerAdapter.getPageTitle(i))
+									.setTabListener(activity));
+				}
+				return null;
+			}
+
+			@Override
+			protected void onPostExecute(Void aVoid) {
+				pbLayout.setVisibility(View.GONE);
+				mViewPager.setVisibility(View.VISIBLE);
+			}
+		}.execute();
+
     }
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if(requestCode == RequestCodes.OPEN_GPS_SETTINGS_REQUEST_CODE){
-			if (resultCode == RESULT_OK) {
-				boolean trackingEnabled = gpsTracker.startTracker();
-				enableTrackingLayout.setVisibility(trackingEnabled ? View.GONE : View.VISIBLE);
-			}
+			boolean trackingEnabled = gpsTracker.startTracker();
+			enableTrackingLayout.setVisibility(trackingEnabled ? View.GONE : View.VISIBLE);
 		} else if (requestCode == RequestCodes.TAKE_PICTURE_REQUEST_CODE) {
 			if (resultCode == RESULT_OK) {
 //				Bundle extras = data.getExtras();

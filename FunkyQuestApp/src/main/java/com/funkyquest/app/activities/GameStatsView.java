@@ -1,11 +1,11 @@
 package com.funkyquest.app.activities;
 
 import android.content.Context;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import com.funkyquest.app.FunkyQuestApplication;
 import com.funkyquest.app.R;
 import com.funkyquest.app.dto.InGameTaskDTO;
 import com.funkyquest.app.dto.TaskDTO;
@@ -19,8 +19,6 @@ public class GameStatsView extends LinearLayout {
 
 	private final Date gameStartDate;
 
-	private final Handler handler = new Handler();
-
 	private final Runnable updateTimerMethod = new Runnable() {
 
 		public void run() {
@@ -33,7 +31,7 @@ public class GameStatsView extends LinearLayout {
 			                                      String.format("%02dч:%02dм:%02dс", hours,
 			                                                    minutes, seconds));
 			timeInGameTV.setText(timeString);
-			handler.postDelayed(this, 100);
+			FunkyQuestApplication.postToMainThreadAfterDelay(this, 100);
 		}
 	};
 
@@ -80,7 +78,7 @@ public class GameStatsView extends LinearLayout {
 		setUsedHintNumber(taskDTO.getUsedHintIds().size(),
 		                  originalTask.getHints().size());
 		setScore(0);
-		handler.post(updateTimerMethod);
+		FunkyQuestApplication.postToMainThread(updateTimerMethod);
 	}
 
 	private void setScore(int score) {

@@ -40,9 +40,9 @@ public class GPSTracker {
 		AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
 
 		// Setting Dialog Title
-		alertDialog.setTitle("Настройки GPS");
+		alertDialog.setTitle("Настройки местоположения");
 
-		alertDialog.setMessage("GPS отключен. Хотите открыть меню настроек?");
+		alertDialog.setMessage("Определение местоположения отключено. Хотите открыть меню настроек?");
 
 		alertDialog.setPositiveButton("Настройки", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {

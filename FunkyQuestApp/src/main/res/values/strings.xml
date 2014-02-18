@@ -11,5 +11,6 @@
     <string name="enter_answer_dialog_title">Введите ответ</string>
     <string name="answer_dialog_confirm">Отправить</string>
     <string name="answer_dialog_cancel">Отменить</string>
+    <string name="preparing_progress">Инициализация</string>
 
 </resources>

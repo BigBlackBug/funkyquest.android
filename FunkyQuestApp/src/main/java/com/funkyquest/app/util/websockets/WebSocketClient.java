@@ -261,11 +261,12 @@ public class WebSocketClient {
         public void onMessage(byte[] data);
         public void onDisconnect(Reason reason, String... message);
         public void onError(ErrorType errorType,Exception error);
-	    public static enum Reason{
-		    EOF, CONNECTION_RESET, UNKNOWN;
+	    public static enum Reason {
+		    EOF, CONNECTION_RESET, UNKNOWN
 	    }
-	    public static enum ErrorType{
-		    CONNECTION,DISCONNECTION,DELIVERY
+
+	    public static enum ErrorType {
+		    CONNECTION, DISCONNECTION, DELIVERY
 	    }
     }
 

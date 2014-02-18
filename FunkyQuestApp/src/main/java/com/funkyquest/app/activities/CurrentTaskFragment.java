@@ -44,6 +44,7 @@ public class CurrentTaskFragment extends Fragment {
 	private TextView taskDescriptionTV;
 
 	private boolean hintRequested = false;
+
     private ViewGroup buttonsLayout;
 
 	private int currentTaskPrice;
@@ -272,6 +273,7 @@ public class CurrentTaskFragment extends Fragment {
 				dialog.cancel();
 			}
 		});
+		dialog.show();
 	}
 
 	private final class AnswerButtonClickListener implements View.OnClickListener {

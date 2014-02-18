@@ -39,6 +39,7 @@
                     android:textAppearance="@android:style/TextAppearance.Large"/>
 
             <Button
+                    style="@style/btnStylemedium_wood"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="13sp"
@@ -58,6 +59,7 @@
             android:orientation="horizontal">
         <!-- your bottom content -->
         <Button
+                style="@style/btnStylemedium_wood"
                 android:id="@+id/button_answer"
                 android:text="@string/answer_task"
                 android:layout_width="0dp"
@@ -65,6 +67,7 @@
                 android:layout_height="fill_parent"/>
 
         <Button
+                style="@style/btnStylemedium_wood"
                 android:id="@+id/button_take_hint"
                 android:text="@string/take_hint"
                 android:layout_width="0dp"

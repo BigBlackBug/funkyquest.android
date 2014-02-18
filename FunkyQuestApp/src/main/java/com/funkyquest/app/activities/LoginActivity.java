@@ -5,12 +5,12 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -25,6 +25,7 @@ import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
 
+import java.net.ConnectException;
 import java.util.Properties;
 
 /**
@@ -43,7 +44,7 @@ public class LoginActivity extends Activity {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-//    private Login mAuthTask = null;
+    private UserLoginTask mAuthTask = null;
     // Values for email and password at the time of the login attempt.
     private String mEmail;
     private String mPassword;
@@ -58,6 +59,7 @@ public class LoginActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Log.d(TAG, "creating login activity");
 
         setContentView(R.layout.activity_login);
@@ -97,12 +99,12 @@ public class LoginActivity extends Activity {
                 });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.login, menu);
-        return true;
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        super.onCreateOptionsMenu(menu);
+//        getMenuInflater().inflate(R.menu.login, menu);
+//        return true;
+//    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -110,9 +112,9 @@ public class LoginActivity extends Activity {
      * errors are presented and no actual login attempt is made.
      */
     public void attemptLogin() {
-//        if (mAuthTask != null) {
-//            return;
-//        }
+        if (mAuthTask != null) {
+            return;
+        }
 	    // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
@@ -151,54 +153,52 @@ public class LoginActivity extends Activity {
             // perform the user login attempt.
             mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
             showProgress(true);
-//            mAuthTask = new UserLoginTask();
-//            mAuthTask.execute((Void) null);
-
-            FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
-            serviceAPI.login(new LoginCallback(serviceAPI), new LoginCredentials(mEmail, mPassword));
+            mAuthTask = new UserLoginTask();
+            mAuthTask.execute((Void) null);
         }
     }
 
+	private class UserLoginTask extends AsyncTask<Void,Void,Void>{
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			//LOL It's async
+			FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+			serviceAPI.login(new LoginCallback(serviceAPI), new LoginCredentials(mEmail, mPassword));
+			return null;
+		}
+	}
+	private void showProgress(final boolean show){
+		animateVisibility(show, mLoginStatusView);
+		animateVisibility(!show, mLoginFormView);
+	}
     /**
      * Shows the progress UI and hides the login form.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
+    private void animateVisibility(final boolean show, final View targetView) {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             int shortAnimTime = getResources()
-                    .getInteger(android.R.integer.config_shortAnimTime);
+                    .getInteger(android.R.integer.config_mediumAnimTime);
 
-            mLoginStatusView.setVisibility(View.VISIBLE);
-            mLoginStatusView.animate()
+	        targetView.setVisibility(View.VISIBLE);
+	        targetView.animate()
                     .setDuration(shortAnimTime)
                     .alpha(show ? 1 : 0)
                     .setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            mLoginStatusView.setVisibility(
+	                        targetView.setVisibility(
                                     show ? View.VISIBLE : View.GONE);
-                        }
-                    });
-
-            mLoginFormView.setVisibility(View.VISIBLE);
-            mLoginFormView.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha(show ? 0 : 1)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            mLoginFormView.setVisibility(
-                                    show ? View.GONE : View.VISIBLE);
                         }
                     });
         } else {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
-            mLoginStatusView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+	        targetView.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -218,7 +218,8 @@ public class LoginActivity extends Activity {
 			if (currentTask == null) {
 				//TODO no more tasks, yay
 			} else {
-				Intent intent = new Intent(LoginActivity.this,GameActivity.class);
+				Log.i(TAG,"serializing entities");
+				Intent intent = new Intent(LoginActivity.this, GameActivity.class);
 				intent.putExtra("userID", userID);
 				try {
 					intent.putExtra("currentGame", mapper.writeValueAsString(currentGame));
@@ -228,8 +229,9 @@ public class LoginActivity extends Activity {
 				}
 
 				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+				Log.i(TAG,"starting activity");
 				startActivity(intent);
-				finish();
+				overridePendingTransition(0, 0);
 			}
 		}
 
@@ -245,7 +247,6 @@ public class LoginActivity extends Activity {
 
 		@Override
 		public void onPostExecute() {
-			showProgress(false);
 		}
 		//TODO onexc
 	}
@@ -301,20 +302,31 @@ public class LoginActivity extends Activity {
         public void onException(Exception ex) {
 	        showProgress(false);
 	        //TODO analyze exception
-            mPasswordView
-                    .setError(getString(R.string.error_incorrect_password));
-            mPasswordView.requestFocus();
+	        String message = "Неизвестная ошибка";
+	        if(ex instanceof ConnectException){
+		        message = "Сервер недоступен";
+	        }
+	        FunkyQuestApplication.showToast(LoginActivity.this, message,
+	                                        FunkyQuestApplication.Duration.LONG);
         }
 
         @Override
         public void onApplicationError(int errorCode) {
-            //TODO
-
+	        showProgress(false);
+	        Log.i("A",errorCode+"");
+	        if(errorCode == 400){
+		        mPasswordView
+				        .setError(getString(R.string.error_incorrect_password));
+		        mPasswordView.requestFocus();
+	        }else{
+		        FunkyQuestApplication.showToast(LoginActivity.this, "Неизвестная ошибка",
+		                                        FunkyQuestApplication.Duration.LONG);
+	        }
         }
 
         @Override
         public void onPostExecute() {
-//            mAuthTask = null;
+            mAuthTask = null;
         }
     }
 

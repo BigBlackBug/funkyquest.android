@@ -28,7 +28,7 @@ public class PhotoComponent {
 		// Ensure that there's a camera activity to handle the intent
 		if (takePictureIntent.resolveActivity(activity.getPackageManager()) != null) {
 			// Create the File where the photo should go
-			File photoFile = null;
+			File photoFile;
 			try {
 				photoFile = createImageFile();
 			} catch (IOException ex) {
@@ -49,15 +49,7 @@ public class PhotoComponent {
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String imageFileName = "JPEG_" + timeStamp + "_";
 		File storageDir = activity.getExternalFilesDir(null);
-		File image = File.createTempFile(
-				imageFileName,
-				".jpg",
-				storageDir
-		);
-
-		// Save a file: path for use with ACTION_VIEW intents
-//		String mCurrentPhotoPath = "file:" + image.getAbsolutePath();
-		return image;
+		return File.createTempFile(imageFileName, ".jpg", storageDir);
 	}
 
 

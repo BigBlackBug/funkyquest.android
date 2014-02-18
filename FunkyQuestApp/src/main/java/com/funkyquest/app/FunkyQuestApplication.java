@@ -67,10 +67,9 @@ public class FunkyQuestApplication extends Application {
 		return serviceAPI;
 	}
 
-	public static FQWebSocketClient getWebSocketClient() {
+	public static FQWebSocketClient getWebSocketClient(long userID) {
 		if (socketClient == null) {
-			URI uri = FQApiActions.CONNECT_TO_WEBSOCKET.createURI(serverHost,
-			                                                      serverPort);
+			URI uri = FQApiActions.CONNECT_TO_WEBSOCKET.createURI(serverHost, serverPort, userID);
 			WebSocketClientListener listener = new WebSocketClientListener();
 			WebSocketClient webSocketClient = new WebSocketClient(uri, listener, Collections
 					.<BasicNameValuePair>emptyList());
@@ -131,6 +130,10 @@ public class FunkyQuestApplication extends Application {
 
 	public static void postToMainThreadAfterDelay(Runnable action, int delay) {
 		new Handler(Looper.getMainLooper()).postDelayed(action, delay);
+	}
+
+	public static void postToMainThread(Runnable action) {
+		postToMainThreadAfterDelay(action,0);
 	}
 
 	@Override

@@ -24,6 +24,7 @@ public class Response {
     }
 
     public <T> T convertTo(TypeReference<T> type) throws IOException {
+	    Log.i("Response", "Starting deserialization of response to type "+type.getType());
 	    long before = SystemClock.uptimeMillis();
 	    T result = mapper.readValue(rawResponse, type);
 	    Log.i("Response", "Deserializing response to type "+type.getType()+" took "+(SystemClock.uptimeMillis()-before)+"ms");

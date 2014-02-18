@@ -14,5 +14,5 @@ public enum EventType {
     TEAM_CHANGED,
     TEAM_DELETED,
     HINT_REQUESTED,
-    BALANCE_RECHARGED;
+    BALANCE_RECHARGED
 }
