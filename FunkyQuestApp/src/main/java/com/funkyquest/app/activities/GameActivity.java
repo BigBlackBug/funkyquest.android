@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.FQWebSocketClient;
 import com.funkyquest.app.FunkyQuestApplication;
@@ -47,7 +48,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     /**
      * The {@link android.support.v4.view.ViewPager} that will host the section contents.
      */
-    ViewPager mViewPager;
+    private ViewPager mViewPager;
     private long userID;
     private long teamID;
     private long gameID;
@@ -59,6 +60,8 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 	private View enableTrackingLayout;
 
 	private GameStatsView gameStatsView;
+
+	private View pbLayout;
 
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +111,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 			}
 		});
 
-		final View pbLayout = findViewById(R.id.preparing_activity_status);
+		pbLayout = findViewById(R.id.preparing_activity_status);
 		final GameActivity activity=this;
 		new AsyncTask<Void,Void,Void>(){
 
@@ -134,17 +137,17 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 					}
 				}
 				gameID = gameDTO.getId();
+				return null;
+			}
+
+			@Override
+			protected void onPostExecute(Void aVoid) {
 				gameStatsView = new GameStatsView(activity, currentTask, gameDTO.getStartDate());
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
-						mainLayout.addView(gameStatsView, 0,
-						                   new LinearLayout.LayoutParams(
-								                   LinearLayout.LayoutParams.MATCH_PARENT,
-								                   ViewGroup.LayoutParams.WRAP_CONTENT));
-					}
-				});
+				LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
+				mainLayout.addView(gameStatsView, 0,
+				                   new LinearLayout.LayoutParams(
+						                   LinearLayout.LayoutParams.MATCH_PARENT,
+						                   ViewGroup.LayoutParams.WRAP_CONTENT));
 				// Set up the action bar.
 				final ActionBar actionBar = getActionBar();
 				actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -181,17 +184,39 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 									.setText(mSectionsPagerAdapter.getPageTitle(i))
 									.setTabListener(activity));
 				}
-				return null;
-			}
+				hideProgressBar();
 
-			@Override
-			protected void onPostExecute(Void aVoid) {
-				pbLayout.setVisibility(View.GONE);
-				mViewPager.setVisibility(View.VISIBLE);
 			}
 		}.execute();
 
     }
+
+	long getGameId() {
+		return gameID;
+	}
+
+	GameStatsView getGameStatsView() {
+		return gameStatsView;
+	}
+
+	FQWebSocketClient getSocketClient() {
+		return socketClient;
+	}
+
+	InGameTaskDTO getTaskDTO() {
+		return currentTask;
+	}
+	void hideProgressBar() {
+		pbLayout.setVisibility(View.GONE);
+		mViewPager.setVisibility(View.VISIBLE);
+	}
+
+	void showProgressBar(String text){
+		TextView tv = (TextView) pbLayout.findViewById(R.id.preparing_status_message);
+		tv.setText(text);
+		pbLayout.setVisibility(View.VISIBLE);
+		mViewPager.setVisibility(View.GONE);
+	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -254,7 +279,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
     }
 
-    /**
+	/**
      * A {@link android.support.v13.app.FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
@@ -268,7 +293,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
             chatFragment = new ChatFragment("LOLCHAT");
-            currentTaskFragment = new CurrentTaskFragment(gameID, currentTask, socketClient,gameStatsView);
+            currentTaskFragment = new CurrentTaskFragment(GameActivity.this);
             gameInfoFragment = new GameInfoFragment("GAMEINFO");
             mapFragment = new MapFragment("MAP");
         }

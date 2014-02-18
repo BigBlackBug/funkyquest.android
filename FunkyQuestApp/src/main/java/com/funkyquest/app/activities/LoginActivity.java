@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -44,7 +43,6 @@ public class LoginActivity extends Activity {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
     // Values for email and password at the time of the login attempt.
     private String mEmail;
     private String mPassword;
@@ -112,9 +110,6 @@ public class LoginActivity extends Activity {
      * errors are presented and no actual login attempt is made.
      */
     public void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
 	    // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
@@ -153,21 +148,10 @@ public class LoginActivity extends Activity {
             // perform the user login attempt.
             mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
             showProgress(true);
-            mAuthTask = new UserLoginTask();
-            mAuthTask.execute((Void) null);
+	        FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+	        serviceAPI.login(new LoginCallback(serviceAPI), new LoginCredentials(mEmail, mPassword));
         }
     }
-
-	private class UserLoginTask extends AsyncTask<Void,Void,Void>{
-
-		@Override
-		protected Void doInBackground(Void... params) {
-			//LOL It's async
-			FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
-			serviceAPI.login(new LoginCallback(serviceAPI), new LoginCredentials(mEmail, mPassword));
-			return null;
-		}
-	}
 	private void showProgress(final boolean show){
 		animateVisibility(show, mLoginStatusView);
 		animateVisibility(!show, mLoginFormView);
@@ -202,6 +186,13 @@ public class LoginActivity extends Activity {
         }
     }
 
+	@Override
+	protected void onPause() {
+		super.onPause();
+		Log.i(TAG,"onPause");
+		overridePendingTransition(R.anim.abc_fade_in, R.anim.abc_fade_out);
+	}
+
 	private class StartGameActivity implements NetworkCallback<InGameTaskDTO> {
 
 		private final Long userID;
@@ -229,9 +220,9 @@ public class LoginActivity extends Activity {
 				}
 
 				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-				Log.i(TAG,"starting activity");
+				Log.i(TAG, "starting activity");
 				startActivity(intent);
-				overridePendingTransition(0, 0);
+				finish();
 			}
 		}
 
@@ -326,7 +317,6 @@ public class LoginActivity extends Activity {
 
         @Override
         public void onPostExecute() {
-            mAuthTask = null;
         }
     }
 

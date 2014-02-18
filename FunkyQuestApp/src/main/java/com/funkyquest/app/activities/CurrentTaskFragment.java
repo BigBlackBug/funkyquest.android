@@ -15,10 +15,12 @@ import android.widget.*;
 import com.funkyquest.app.FQWebSocketClient;
 import com.funkyquest.app.FunkyQuestApplication;
 import com.funkyquest.app.R;
+import com.funkyquest.app.WebSocketClientListener;
 import com.funkyquest.app.api.FQServiceAPI;
 import com.funkyquest.app.api.SimpleNetworkCallback;
 import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.dto.*;
+import com.funkyquest.app.dto.util.EventType;
 import com.funkyquest.app.util.Utils;
 
 import java.io.File;
@@ -55,21 +57,29 @@ public class CurrentTaskFragment extends Fragment {
 
 	private TaskDTO originalTask;
 
-	private Activity parentActivity;
+	private GameActivity gameActivity;
 
 	private PhotoComponent photoComponent;
 
 	private File imageFile;
 
-	public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO, FQWebSocketClient socketClient,
-                               GameStatsView gameStatsView) {
-        this.gameID = gameID;
-	    this.gameStatsView = gameStatsView;
-		this.socketClient = socketClient;
-        setTaskDTO(taskDTO);
-    }
+//	public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO, FQWebSocketClient socketClient,
+//                               GameStatsView gameStatsView) {
+//        this.gameID = gameID;
+//	    this.gameStatsView = gameStatsView;
+//		this.socketClient = socketClient;
+//        setTaskDTO(taskDTO);
+//    }
 
-    private void fillViews() {
+	public CurrentTaskFragment(GameActivity gameActivity) {
+		this.gameActivity = gameActivity;
+		this.gameID = gameActivity.getGameId();
+		this.gameStatsView = gameActivity.getGameStatsView();
+		this.socketClient = gameActivity.getSocketClient();
+		setTaskDTO(gameActivity.getTaskDTO());
+	}
+
+	private void fillViews() {
 	    takeHint.setEnabled(false);
 	    if (originalTask.getHints().size() != 0) {
 		    takeHint.setEnabled(true);
@@ -92,57 +102,60 @@ public class CurrentTaskFragment extends Fragment {
 	}
 
 	private void addListeners(){
-		//TODO uncomment as is
-//		socketClient.addMessageListener(EventType.ANSWER_ACCEPTED,
-//		new WebSocketClientListener.FQMessageListener<Void>() {
-//			@Override
-//			public void onMessage(Void message) {
-//			gameStatsView.increaseScore(currentTaskPrice);
-//			gameStatsView.increaseTaskIndex();
-//            serviceAPI.getCurrentTask(gameID,new SimpleNetworkCallback<InGameTaskDTO>() {
-//                @Override
-//                public void onSuccess(InGameTaskDTO taskDTO) {
-//                //TODO add spinner. 'getting new task'
-//                setTaskDTO(taskDTO);
-//                fillViews();
-//                FunkyQuestApplication.setViewState(true,buttonsLayout);
-//                }
-//            });
-//			}
-//		});
-//		socketClient.addMessageListener(EventType.ANSWER_REJECTED,
-//		new WebSocketClientListener.FQMessageListener<Void>() {
-//			@Override
-//			public void onMessage(Void message) {
-//            //TODO show notif
-//            FunkyQuestApplication.setViewState(true,buttonsLayout);
-//			}
-//		});
-//
-//		socketClient.addMessageListener(EventType.ANSWER_POSTED,
-//		new WebSocketClientListener.FQMessageListener<Void>() {
-//			@Override
-//			public void onMessage(Void message) {
-//            //TODO show notif
-//            FunkyQuestApplication.setViewState(false,buttonsLayout);
-//			}
-//		});
-//		socketClient.addMessageListener(EventType.HINT_REQUESTED,
-//		new WebSocketClientListener.FQMessageListener<HintDTO>() {
-//			@Override
-//			public void onMessage(HintDTO hintDTO) {
-//            if(!hintRequested){
-//                processNewHint(hintDTO);
-//            }
-//            hintRequested = false;
-//			}
-//		});
+		socketClient.addMessageListener(EventType.ANSWER_ACCEPTED,
+		new WebSocketClientListener.FQMessageListener<Void>() {
+			@Override
+			public void onMessage(Void message) {
+			gameStatsView.increaseScore(currentTaskPrice);
+			gameStatsView.increaseTaskIndex();
+			gameActivity.showProgressBar(gameActivity.getString(R.string.getting_new_task));
+            serviceAPI.getCurrentTask(gameID,new SimpleNetworkCallback<InGameTaskDTO>() {
+                @Override
+                public void onSuccess(InGameTaskDTO taskDTO) {
+                if(taskDTO == null){
+	                //TODO yay no more tasks
+	                return;
+                }
+                gameActivity.hideProgressBar();
+                setTaskDTO(taskDTO);
+                fillViews();
+                FunkyQuestApplication.setViewState(true,buttonsLayout);
+                }
+            });
+			}
+		});
+		socketClient.addMessageListener(EventType.ANSWER_REJECTED,
+		new WebSocketClientListener.FQMessageListener<Void>() {
+			@Override
+			public void onMessage(Void message) {
+            //TODO show notif
+            FunkyQuestApplication.setViewState(true,buttonsLayout);
+			}
+		});
+
+		socketClient.addMessageListener(EventType.ANSWER_POSTED,
+		new WebSocketClientListener.FQMessageListener<Void>() {
+			@Override
+			public void onMessage(Void message) {
+            //TODO show notif
+            FunkyQuestApplication.setViewState(false,buttonsLayout);
+			}
+		});
+		socketClient.addMessageListener(EventType.HINT_REQUESTED,
+		new WebSocketClientListener.FQMessageListener<HintDTO>() {
+			@Override
+			public void onMessage(HintDTO hintDTO) {
+            if(!hintRequested){
+                processNewHint(hintDTO);
+            }
+            hintRequested = false;
+			}
+		});
 	}
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-	    this.parentActivity = getActivity();
-	    this.photoComponent = new PhotoComponent(parentActivity);
+	    this.photoComponent = new PhotoComponent(gameActivity);
 	    serviceAPI = FunkyQuestApplication.getServiceAPI();
 	    final View rootView = inflater.inflate(R.layout.current_task_fragment, container, false);
 	    takeHint = (Button) rootView.findViewById(R.id.button_take_hint);
@@ -222,7 +235,7 @@ public class CurrentTaskFragment extends Fragment {
 	                      }
 	                      @Override
 	                      public void onApplicationError(int errorCode) {
-		                      FunkyQuestApplication.showToast(parentActivity,"POST FAILED RETURN CODE "+errorCode,
+		                      FunkyQuestApplication.showToast(gameActivity,"POST FAILED RETURN CODE "+errorCode,
 		                                                      FunkyQuestApplication.Duration.LONG);
 	                      }
                       });
@@ -237,7 +250,8 @@ public class CurrentTaskFragment extends Fragment {
                   @Override
                   public void onApplicationError(int errorCode) {
 	                  progressBar.setProgress(0);
-                      FunkyQuestApplication.showToast(parentActivity,"UPLOAD FAILED RETURN CODE "+errorCode,
+                      FunkyQuestApplication.showToast(
+		                      gameActivity,"UPLOAD FAILED RETURN CODE "+errorCode,
                                                       FunkyQuestApplication.Duration.LONG);
                   }
                   //TODO exc
@@ -261,7 +275,7 @@ public class CurrentTaskFragment extends Fragment {
 		ProgressBar progressBar = (ProgressBar) dialogLayout.findViewById(R.id.progressbar);
 
 		ImageView takenImageIV = (ImageView) dialogLayout.findViewById(R.id.iv_dialog_thumbnail);
-		takenImageIV.setImageBitmap(Utils.readRotateAndScale(imageFile,8,parentActivity));
+		takenImageIV.setImageBitmap(Utils.readRotateAndScale(imageFile,8, gameActivity));
 		takenImageIV.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -302,17 +316,18 @@ public class CurrentTaskFragment extends Fragment {
 		}
 
 		private void showTextInputDialog() {
-			AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-			builder.setTitle(parentActivity.getString(R.string.enter_answer_dialog_title));
+			AlertDialog.Builder builder = new AlertDialog.Builder(gameActivity);
+			builder.setTitle(gameActivity.getString(R.string.enter_answer_dialog_title));
 
-			final EditText input = new EditText(parentActivity);
+			final EditText input = new EditText(gameActivity);
 			input.setInputType(
 					InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 			builder.setView(input);
 
-			builder.setPositiveButton(parentActivity.getString(R.string.answer_dialog_confirm),new SendTextAnswer(input));
+			builder.setPositiveButton(gameActivity.getString(R.string.answer_dialog_confirm),
+			                          new SendTextAnswer(input));
 
-			builder.setNegativeButton(parentActivity.getString(R.string.answer_dialog_cancel),
+			builder.setNegativeButton(gameActivity.getString(R.string.answer_dialog_cancel),
 				new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -341,7 +356,7 @@ public class CurrentTaskFragment extends Fragment {
 					new SimpleNetworkCallback<AnswerIdDTO>() {
 						@Override
 						public void onSuccess(AnswerIdDTO arg) {
-							FunkyQuestApplication.showToast(parentActivity,"ANSWER_POSTED",
+							FunkyQuestApplication.showToast(gameActivity,"ANSWER_POSTED",
 									FunkyQuestApplication.Duration.LONG);
 						}
 					});

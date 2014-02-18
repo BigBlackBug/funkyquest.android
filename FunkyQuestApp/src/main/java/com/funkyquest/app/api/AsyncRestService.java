@@ -1,6 +1,5 @@
 package com.funkyquest.app.api;
 
-import android.os.AsyncTask;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.api.utils.AsyncRequest;
@@ -11,6 +10,8 @@ import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by bigblackbug on 1/31/14.
@@ -42,10 +43,35 @@ public class AsyncRestService {
 		new AsyncUploadRequestTask<Resp>(restService,writeListener).execute(request);
 	}
 
+	private abstract static class FQRunnable<Params, Result>{
+
+		protected static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
+
+		protected abstract Result doInBackground(Params...params) throws Exception;
+
+		protected abstract void onPostExecute(Result result);
+
+		protected abstract void onException(Exception exception);
+
+		public void execute(final Params...params) {
+			EXECUTOR.submit(new Runnable() {
+				@Override
+				public void run() {
+					Result result;
+					try{
+						result = doInBackground(params);
+					}catch(Exception ex){
+						onException(ex);
+						return;
+					}
+					onPostExecute(result);
+				}
+			});
+		}
+	}
     private static abstract class AsyncRequestTask<
-            Req, Resp> extends AsyncTask<AsyncRequest<Req, Resp>, Void, Response> {
+            Req, Resp> extends FQRunnable<AsyncRequest<Req, Resp>,  Response> {
         protected final RestService restService;
-        private Exception exception;
         private NetworkCallback<Resp> callback;
         private TypeReference<Resp> responseType;
 
@@ -54,43 +80,39 @@ public class AsyncRestService {
         }
 
         @Override
-        protected Response doInBackground(AsyncRequest<Req, Resp>... params) {
+        protected Response doInBackground(AsyncRequest<Req, Resp>... params) throws Exception{
             AsyncRequest<Req, Resp> request = params[0];
             this.callback = request.getCallback();
             this.responseType = request.getResponseType();
-            try {
-                return executeMethod(request.toRequest());
-            } catch (Exception e) {
-                exception = e;
-                return null;
-            }
+            return executeMethod(request.toRequest());
         }
 
         protected abstract Response executeMethod(Request<Req> request) throws Exception;
 
-        @Override
+	    @Override
+	    protected void onException(Exception exception) {
+		    callback.onException(exception);
+	    }
+
+	    @Override
         protected void onPostExecute(Response response) {
             callback.onPostExecute();
             Resp responseValue;
-            if (exception == null) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode == HTTP_OK) {
-                    if(response.getRawResponse().isEmpty()){
-                        callback.onSuccess(null);
-                    }else{
-                        try {
-                            responseValue = response.convertTo(responseType);
-                        } catch (IOException e) {
-                            callback.onException(e);
-                            return;
-                        }
-                        callback.onSuccess(responseValue);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == HTTP_OK) {
+                if(response.getRawResponse().isEmpty()){
+                    callback.onSuccess(null);
+                }else{
+                    try {
+                        responseValue = response.convertTo(responseType);
+                    } catch (IOException e) {
+                        callback.onException(e);
+                        return;
                     }
-                } else {
-                    callback.onApplicationError(statusCode);
+                    callback.onSuccess(responseValue);
                 }
             } else {
-                callback.onException(exception);
+                callback.onApplicationError(statusCode);
             }
         }
     }
