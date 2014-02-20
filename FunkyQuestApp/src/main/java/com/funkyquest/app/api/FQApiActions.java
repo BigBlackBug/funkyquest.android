@@ -1,5 +1,6 @@
 package com.funkyquest.app.api;
 
+import com.funkyquest.app.dto.util.Subscription;
 import com.funkyquest.app.exceptions.FunkyQuestException;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -11,6 +12,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by bigblackbug on 1/28/14.
@@ -25,6 +27,7 @@ public enum FQApiActions {
 				}
 				List<NameValuePair> paramList = new ArrayList<NameValuePair>();
 				paramList.add(new BasicNameValuePair("userId", String.valueOf(userID[0])));
+				paramList.add(new BasicNameValuePair("isHost",String.valueOf(false)));
 				String paramString="?"+ URLEncodedUtils.format(paramList, "UTF-8");
 				return URI.create("ws://"+host+":"+port+String.format(getPath())+paramString);
 			}catch(IllegalArgumentException ex){
@@ -32,6 +35,27 @@ public enum FQApiActions {
 			}
 		}
 	},
+	ADD_SUBSCRIPTION("/addSubscription%s"){
+		@Override
+		public URI createURI(String host, int port, Object... args) {
+			if (args.length != 2) {
+				throw new RuntimeException("invalid arguments");
+			}
+			UUID connectionId = (UUID) args[0];
+			Subscription subscription = (Subscription) args[1];
+			List<NameValuePair> paramList = new ArrayList<NameValuePair>();
+			Long gameID = subscription.getGameID();
+			Long teamID = subscription.getTeamID();
+			Long userID = subscription.getUserID();
+			paramList.add(new BasicNameValuePair("gameId", String.valueOf(gameID)));
+			paramList.add(new BasicNameValuePair("teamId",String.valueOf(teamID)));
+			paramList.add(new BasicNameValuePair("userId",String.valueOf(userID)));
+			paramList.add(new BasicNameValuePair("connectionId",connectionId.toString()));
+			String paramString="?"+ URLEncodedUtils.format(paramList, "UTF-8");
+			return super.createURI(host, port, paramString);
+		}
+	},
+	GET_GAME_BY_ID("/api/games/%s"),
 	LOGIN("/api/login"),
     ACTIVE_GAME("/api/activeGames"),
     CURRENT_TASK("/api/activeGames/%s/task"),

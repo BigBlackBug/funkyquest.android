@@ -13,15 +13,18 @@ public class FQLocationListener implements LocationListener {
 
 	private final FQWebSocketClient socketClient;
 
-	public FQLocationListener(FQWebSocketClient socketClient) {
+	private final Long userID;
+
+	public FQLocationListener(FQWebSocketClient socketClient, Long userID) {
 		this.socketClient = socketClient;
+		this.userID = userID;
 	}
 
 	@Override
 	public void onLocationChanged(Location location) {
-		if(socketClient.isConnected()){
+		if (socketClient.isConnected()) {
 			socketClient.sendLocation(
-					new PlayerLocationDTO(location.getLatitude(), location.getLongitude()));
+					new PlayerLocationDTO(userID, location.getLatitude(), location.getLongitude()));
 		}
 	}
 

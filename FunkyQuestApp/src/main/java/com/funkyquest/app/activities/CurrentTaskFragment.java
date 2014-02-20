@@ -83,7 +83,7 @@ public class CurrentTaskFragment extends Fragment {
 	    takeHint.setEnabled(false);
 	    if (originalTask.getHints().size() != 0) {
 		    takeHint.setEnabled(true);
-	    }
+	    }   //TODO disable bttons is answer aleardy psoted
 	    taskTitleTV.setText(originalTask.getTitle());
 	    taskDescriptionTV.setText(originalTask.getText());
 	    Set<Long> usedHintIds = taskDTO.getUsedHintIds();
@@ -119,7 +119,12 @@ public class CurrentTaskFragment extends Fragment {
                 gameActivity.hideProgressBar();
                 setTaskDTO(taskDTO);
                 fillViews();
-                FunkyQuestApplication.setViewState(true,buttonsLayout);
+                gameActivity.runOnUiThread(new Runnable() {
+	                @Override
+	                public void run() {
+	                FunkyQuestApplication.setViewState(false,buttonsLayout);
+                   }
+                });
                 }
             });
 			}
@@ -128,8 +133,14 @@ public class CurrentTaskFragment extends Fragment {
 		new WebSocketClientListener.FQMessageListener<Void>() {
 			@Override
 			public void onMessage(Void message) {
+			Log.i(getTag(),"answer rejected");
             //TODO show notif
-            FunkyQuestApplication.setViewState(true,buttonsLayout);
+			gameActivity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+				FunkyQuestApplication.setViewState(false,buttonsLayout);
+				}
+			});
 			}
 		});
 
@@ -137,18 +148,35 @@ public class CurrentTaskFragment extends Fragment {
 		new WebSocketClientListener.FQMessageListener<Void>() {
 			@Override
 			public void onMessage(Void message) {
+			Log.i(getTag(),"answer posted notif");
             //TODO show notif
-            FunkyQuestApplication.setViewState(false,buttonsLayout);
+			gameActivity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+				FunkyQuestApplication.setViewState(false,buttonsLayout);
+				}
+			});
 			}
 		});
 		socketClient.addMessageListener(EventType.HINT_REQUESTED,
 		new WebSocketClientListener.FQMessageListener<HintDTO>() {
 			@Override
 			public void onMessage(HintDTO hintDTO) {
+			Log.i(getTag(),"hint requested");
             if(!hintRequested){
                 processNewHint(hintDTO);
             }
             hintRequested = false;
+			}
+		});
+		socketClient.addMessageListener(EventType.LOCATION_CHANGED,
+        new WebSocketClientListener.FQMessageListener<PlayerLocationDTO>() {
+			@Override
+			public void onMessage(PlayerLocationDTO locationDTO) {
+			long userID = locationDTO.getUserID();
+			double latitude = locationDTO.getLatitude();
+			double longitude = locationDTO.getLongitude();
+			Log.i(getTag(),"User "+userID+" coords: "+latitude+" "+longitude);
 			}
 		});
 	}
@@ -161,13 +189,13 @@ public class CurrentTaskFragment extends Fragment {
 	    takeHint = (Button) rootView.findViewById(R.id.button_take_hint);
 	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_current_task);
 //	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_enable_gps);
-        buttonsLayout = (ViewGroup) mainContainer.findViewById(R.id.layout_buttons);
+        buttonsLayout = (ViewGroup) rootView.findViewById(R.id.layout_buttons);
         taskTitleTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_task_title);
 	    taskDescriptionTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_description);
 	    fillViews();
-        addListeners();
+        addListeners();  //TODO add btton disabled view
 
 	    takeHint.setOnClickListener(new View.OnClickListener() {
 		    @Override
@@ -189,6 +217,8 @@ public class CurrentTaskFragment extends Fragment {
 
 	private void processNewHint(HintDTO hintDTO) {
 		this.currentTaskPrice -= hintDTO.getPoints();
+		gameStatsView.setTaskPrice(currentTaskPrice);
+		gameStatsView.increaseUsedHintNumber();
 		Activity activity = getActivity();
 		Resources resources = activity.getResources();
 		LinearLayout.LayoutParams layoutParams =
@@ -230,7 +260,6 @@ public class CurrentTaskFragment extends Fragment {
 	                      @Override
 	                      public void onSuccess(AnswerIdDTO arg) {
 		                      Log.i("TAG", "ANSWER POSTED");
-		                      //TODO answer posted
 		                      dialog.cancel();
 	                      }
 	                      @Override
@@ -352,14 +381,17 @@ public class CurrentTaskFragment extends Fragment {
 				PlayerAnswerDTO dto = new PlayerAnswerDTO();
 				dto.setTask(taskId);
 				dto.setText(text);
-				serviceAPI.postAnswer(gameID, taskId, dto,
-					new SimpleNetworkCallback<AnswerIdDTO>() {
-						@Override
-						public void onSuccess(AnswerIdDTO arg) {
-							FunkyQuestApplication.showToast(gameActivity,"ANSWER_POSTED",
-									FunkyQuestApplication.Duration.LONG);
-						}
-					});
+				serviceAPI.postAnswer(gameID,taskDTO.getId(),dto,new SimpleNetworkCallback<AnswerIdDTO>() {
+					@Override
+					public void onSuccess(AnswerIdDTO arg) {
+						Log.i("TAG", "ANSWER POSTED");
+					}
+					@Override
+					public void onApplicationError(int errorCode) {
+						FunkyQuestApplication.showToast(gameActivity,"POST FAILED RETURN CODE "+errorCode,
+						                                FunkyQuestApplication.Duration.LONG);
+					}
+				});
 			}
 		}
 	}

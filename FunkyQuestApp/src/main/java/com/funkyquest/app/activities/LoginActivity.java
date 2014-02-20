@@ -252,8 +252,9 @@ public class LoginActivity extends Activity {
         @Override
         public void onSuccess(final Long userID) {
             FunkyQuestApplication.showToast(
-                    LoginActivity.this, "Login Successful",
+                    LoginActivity.this, "Подключились!",
                     FunkyQuestApplication.Duration.SHORT);
+//	        mLoginStatusMessageView.setText("Обработка данных");
 
             //here it will have all the needed cookies
             serviceAPI.getCurrentGame(new NetworkCallback<GameDTO>() {

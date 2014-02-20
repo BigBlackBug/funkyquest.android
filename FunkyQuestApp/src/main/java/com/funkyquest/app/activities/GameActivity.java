@@ -20,16 +20,20 @@ import com.funkyquest.app.R;
 import com.funkyquest.app.WebSocketClientListener;
 import com.funkyquest.app.activities.gps.FQLocationListener;
 import com.funkyquest.app.activities.gps.GPSTracker;
+import com.funkyquest.app.api.FQServiceAPI;
+import com.funkyquest.app.api.SimpleNetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
 import com.funkyquest.app.dto.InGameTaskSequenceDTO;
 import com.funkyquest.app.dto.TeamDTO;
+import com.funkyquest.app.dto.util.Subscription;
 import com.funkyquest.app.util.RequestCodes;
 import com.funkyquest.app.util.websockets.WebSocketClient;
 
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 public class GameActivity extends Activity implements ActionBar.TabListener {
 
@@ -52,6 +56,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     private long userID;
     private long teamID;
     private long gameID;
+	private UUID connectionID;
     private GameDTO gameDTO;
     private InGameTaskDTO currentTask;
 	private FQWebSocketClient socketClient;
@@ -63,43 +68,13 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
 	private View pbLayout;
 
+	private static final String ACTIVITY_TAG = "GAME_ACTIVITY";
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-		socketClient = FunkyQuestApplication.getWebSocketClient(userID);
-		socketClient.setSocketLifecycleListener(
-				new WebSocketClientListener.SocketLifeCycleListener() {
-					private static final String TAG = "websocketlistener";
-					@Override
-					public void onError(WebSocketClient.Listener.ErrorType errorType,
-					                    Exception exception) {
-						Log.i(TAG,"error "+errorType,exception);
-						//TODO
-					}
-
-					@Override
-					public void onDisconnect(WebSocketClient.Listener.Reason reason,
-					                         String... message) {
-						Log.i(TAG,"disconnected "+reason);
-						//TODO
-					}
-
-					@Override
-					public void onConnect() {
-						Log.i(TAG,"connected");
-						//TODO
-					}
-				});
-//		socketClient.connect();
 
 		enableTrackingLayout = findViewById(R.id.layout_enable_gps);
-		gpsTracker = new GPSTracker(getApplicationContext(),new FQLocationListener(socketClient));
-
-		boolean trackingEnabled = gpsTracker.startTracker();
-		if(!trackingEnabled){
-			enableTrackingLayout.setVisibility(View.VISIBLE);
-		}
 		Button enableTrackingButton =
 				(Button) enableTrackingLayout.findViewById(R.id.button_enable_tracking);
 		enableTrackingButton.setOnClickListener(new View.OnClickListener() {
@@ -142,12 +117,58 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
 			@Override
 			protected void onPostExecute(Void aVoid) {
+				socketClient = FunkyQuestApplication.getWebSocketClient(userID);
+				socketClient.setSocketLifecycleListener(
+						new WebSocketClientListener.SocketLifeCycleListener() {
+							private static final String TAG = "websocketlistener";
+							@Override
+							public void onError(WebSocketClient.Listener.ErrorType errorType,
+							                    Exception exception) {
+								Log.i(TAG,"error "+errorType,exception);
+								//TODO
+							}
+
+							@Override
+							public void onDisconnect(WebSocketClient.Listener.Reason reason,
+							                         String... message) {
+								Log.i(TAG,"disconnected "+reason);
+								//TODO
+							}
+
+							@Override
+							public void onConnect() {
+								Log.i(TAG,"connected");
+								//TODO
+							}
+						});
+				socketClient.setSubscriptionListener(new WebSocketClientListener.FQMessageListener<UUID>() {
+					@Override
+					public void onMessage(UUID connID) {
+						Log.i(ACTIVITY_TAG,"onsubscrubed");
+						connectionID = connID;
+						Subscription subscription = new Subscription();
+						subscription.setTeamID(teamID);
+						addSubscriptions(subscription);
+						subscription.setGameID(gameID);
+						addSubscriptions(subscription);
+					}
+				});
+				socketClient.connect();
+				gpsTracker = new GPSTracker(getApplicationContext(),new FQLocationListener(socketClient,userID));
+
+				boolean trackingEnabled = gpsTracker.startTracker();
+				if(!trackingEnabled){
+					enableTrackingLayout.setVisibility(View.VISIBLE);
+				}
+
 				gameStatsView = new GameStatsView(activity, currentTask, gameDTO.getStartDate());
 				LinearLayout mainLayout = (LinearLayout) findViewById(R.id.layout_game_activity_main);
+				LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT,
+						ViewGroup.LayoutParams.WRAP_CONTENT);
+				params.setMargins(3,0,3,0);
 				mainLayout.addView(gameStatsView, 0,
-				                   new LinearLayout.LayoutParams(
-						                   LinearLayout.LayoutParams.MATCH_PARENT,
-						                   ViewGroup.LayoutParams.WRAP_CONTENT));
+				                   params);
 				// Set up the action bar.
 				final ActionBar actionBar = getActionBar();
 				actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -190,6 +211,18 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 		}.execute();
 
     }
+
+	private void addSubscriptions(final Subscription subscription) {
+		FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+		serviceAPI.addSubscription(connectionID, subscription,
+	       new SimpleNetworkCallback<Void>() {
+	           @Override
+	           public void onSuccess(Void arg) {
+	               Log.i(ACTIVITY_TAG, "add subs success. "+subscription);
+	               //todo add subs success
+	           }
+	       });
+	}
 
 	long getGameId() {
 		return gameID;
@@ -254,14 +287,18 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		gpsTracker.startTracker();
+		if(gpsTracker!=null){
+			gpsTracker.startTracker();
+		}
 	}
 
 	/* Remove the locationlistener updates when Activity is paused */
 	@Override
 	protected void onPause() {
 		super.onPause();
-		gpsTracker.stopTracker();
+		if(gpsTracker!=null){
+			gpsTracker.stopTracker();
+		}
 	}
 
     @Override
@@ -292,7 +329,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
-            chatFragment = new ChatFragment("LOLCHAT");
+            chatFragment = new ChatFragment("LOLCHAT",socketClient);
             currentTaskFragment = new CurrentTaskFragment(GameActivity.this);
             gameInfoFragment = new GameInfoFragment("GAMEINFO");
             mapFragment = new MapFragment("MAP");

@@ -5,6 +5,7 @@ import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.api.utils.AsyncGetRequest;
 import com.funkyquest.app.api.utils.AsyncRequest;
 import com.funkyquest.app.dto.*;
+import com.funkyquest.app.dto.util.Subscription;
 import com.funkyquest.app.exceptions.UserNotLoggedInException;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -15,6 +16,7 @@ import org.apache.http.protocol.HttpContext;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 public class FQServiceAPI {
 
@@ -57,6 +59,13 @@ public class FQServiceAPI {
 		URI uri = FQApiActions.POST_ANSWER.createURI(serverAddress, serverPort, gameID, taskID);
 		restService.post(new AsyncRequest<PlayerAnswerDTO, AnswerIdDTO>(
 				uri, answer,new TypeReference<AnswerIdDTO>() {}, callback));
+	}
+
+	public void addSubscription(UUID connectionID, Subscription subscription,
+	                       NetworkCallback<Void> callback) throws UserNotLoggedInException {
+		checkLoginStatus();
+		URI uri = FQApiActions.ADD_SUBSCRIPTION.createURI(serverAddress, serverPort, connectionID, subscription);
+		restService.get(new AsyncGetRequest<Void>(uri,EMPTY_MAP,new TypeReference<Void>(){},callback));
 	}
 
 	public void uploadFile(String pathToFile,NetworkCallback<MediaObjectDTO> callback,

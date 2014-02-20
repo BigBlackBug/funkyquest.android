@@ -1,5 +1,6 @@
 package com.funkyquest.app;
 
+import android.util.Log;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.dto.util.EventType;
 import com.funkyquest.app.dto.util.MessageBody;
@@ -8,6 +9,7 @@ import com.funkyquest.app.util.websockets.WebSocketClient;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by BigBlackBug on 2/14/14.
@@ -17,12 +19,18 @@ public class WebSocketClientListener implements WebSocketClient.Listener {
 	private final MapOLists<EventType, FQMessageListener> listeners =
 			new MapOLists<EventType, FQMessageListener>();
 
+	private FQMessageListener<UUID> subscriptionListener;
+
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	private SocketLifeCycleListener lifeCycleListener;
 
 	public <T> void addMessageListener(EventType eventType, FQMessageListener<T> listener) {
 		listeners.put(eventType, listener);
+	}
+
+	public void setSubscriptionListener(FQMessageListener<UUID> subscriptionListener) {
+		this.subscriptionListener = subscriptionListener;
 	}
 
 	public void setLifeCycleListener(SocketLifeCycleListener lifeCycleListener) {
@@ -36,14 +44,39 @@ public class WebSocketClientListener implements WebSocketClient.Listener {
 		}
 	}
 
+	private static final class ConnectionIDWrapper{
+		private String connectionID;
+
+		private ConnectionIDWrapper() {
+		}
+
+		@SuppressWarnings("unused")
+		public String getConnectionID() {
+			return connectionID;
+		}
+
+		private ConnectionIDWrapper(UUID connectionID) {
+			this.connectionID = connectionID.toString();
+		}
+	}
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public void onMessage(String message) {
+		Log.i("SOCKET","hey, I got a message here "+message);
 		MessageBody messageBody;
 		try {
 			messageBody = objectMapper.readValue(message, MessageBody.class);
 		} catch (IOException e) {
-			return;       //never happens
+			try {
+				ConnectionIDWrapper connectionIDWrapper =
+						objectMapper.readValue(message, ConnectionIDWrapper.class);
+				subscriptionListener.onMessage(UUID.fromString(connectionIDWrapper.getConnectionID()));
+				return;
+			} catch (IOException ex) {
+				return;
+				//never happens
+			}
 		}
 //        Set<EventType> voidTypes = new HashSet<EventType>() {{
 //            add(EventType.GAME_FINISHED);

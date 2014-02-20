@@ -6,6 +6,8 @@ import com.funkyquest.app.dto.PlayerLocationDTO;
 import com.funkyquest.app.dto.util.EventType;
 import com.funkyquest.app.util.websockets.WebSocketClient;
 
+import java.util.UUID;
+
 /**
  * Created by BigBlackBug on 2/15/14.
  */
@@ -26,6 +28,11 @@ public class FQWebSocketClient {
 	public void setSocketLifecycleListener(
 			WebSocketClientListener.SocketLifeCycleListener lifeCycleListener) {
 		socketListener.setLifeCycleListener(lifeCycleListener);
+	}
+
+	public void setSubscriptionListener(
+			WebSocketClientListener.FQMessageListener<UUID> subscriptionListener) {
+		socketListener.setSubscriptionListener(subscriptionListener);
 	}
 
 	public <T> void addMessageListener(EventType eventType,

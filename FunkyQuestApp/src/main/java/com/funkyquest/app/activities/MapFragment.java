@@ -2,10 +2,10 @@ package com.funkyquest.app.activities;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import com.funkyquest.app.R;
 
 /**
@@ -18,12 +18,20 @@ public class MapFragment extends Fragment {
         this.text = text;
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        TextView dummyTextView = (TextView) rootView.findViewById(R.id.section_label);
-        dummyTextView.setText(text);
-        return rootView;
-    }
+	private static View view;
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		if (view != null) {
+			ViewGroup parent = (ViewGroup) view.getParent();
+			if (parent != null)
+				parent.removeView(view);
+		}
+		try {
+			view = inflater.inflate(R.layout.map_fragment, container, false);
+		} catch (InflateException e) {
+        /* map is already there, just return view as it is */
+		}
+		return view;
+	}
 }

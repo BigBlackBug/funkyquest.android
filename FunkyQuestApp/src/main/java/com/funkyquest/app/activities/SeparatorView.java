@@ -23,7 +23,7 @@ public class SeparatorView extends LinearLayout {
 
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        ViewGroup layout= (ViewGroup) inflater.inflate(R.layout.separator_view, this, true);
+        ViewGroup layout= (ViewGroup) inflater.inflate(R.layout.separator_view, this, false);
         TextView separatorText = (TextView) layout.findViewById(R.id.tv_separator_text);
         separatorText.setText(text);
     }

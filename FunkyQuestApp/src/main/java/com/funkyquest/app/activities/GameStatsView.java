@@ -2,6 +2,7 @@ package com.funkyquest.app.activities;
 
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -58,6 +59,11 @@ public class GameStatsView extends LinearLayout {
 	private Context context;
 
 	private int totalHintNumber = 0;
+
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent ev) {
+		return true;
+	}
 
 	public GameStatsView(Context context, InGameTaskDTO taskDTO, Date gameStartDate) {
 		super(context);

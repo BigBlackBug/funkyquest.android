@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="ComGoogleAndroidGmsPlayServices4242.aar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/FunkyQuestApp/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4242.aar/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/FunkyQuestApp/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4242.aar/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
