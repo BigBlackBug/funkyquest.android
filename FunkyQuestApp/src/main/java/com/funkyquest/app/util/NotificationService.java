@@ -33,7 +33,7 @@ public class NotificationService {
 	                             EventType eventType) {
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(context)
-						.setSmallIcon(R.drawable.notification_icon)
+						.setSmallIcon(R.drawable.logo)
 						.setContentTitle(title)
 						.setContentText(text).setOngoing(isOngoing).setAutoCancel(!isOngoing);
 		Integer id = notificationMap.get(eventType);

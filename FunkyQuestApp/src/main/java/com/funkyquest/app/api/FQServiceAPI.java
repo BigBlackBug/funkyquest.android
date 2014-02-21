@@ -10,6 +10,8 @@ import com.funkyquest.app.exceptions.UserNotLoggedInException;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
@@ -22,7 +24,11 @@ public class FQServiceAPI {
 
 	private static final Map<String, String> EMPTY_MAP = Collections.emptyMap();
 
-	private final AsyncRestService restService;
+    private static final int CONNECTION_TIMEOUT = 5000;
+
+    private static final int WAIT_RESPONSE_TIMEOUT = 5000;
+
+    private final AsyncRestService restService;
 
 	private final int serverPort;
 
@@ -33,7 +39,12 @@ public class FQServiceAPI {
 	public FQServiceAPI(String serverAddress, int serverPort) {
 		HttpContext httpContext = new BasicHttpContext();
 		httpContext.setAttribute(ClientContext.COOKIE_STORE, new BasicCookieStore());
-		this.restService = new AsyncRestService(new DefaultHttpClient(), httpContext);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        HttpParams httpParameters = httpClient.getParams();
+        HttpConnectionParams.setConnectionTimeout(httpParameters, CONNECTION_TIMEOUT);
+        HttpConnectionParams.setSoTimeout(httpParameters, WAIT_RESPONSE_TIMEOUT);
+        HttpConnectionParams.setTcpNoDelay(httpParameters, true);
+        this.restService = new AsyncRestService(httpClient, httpContext);
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 	}

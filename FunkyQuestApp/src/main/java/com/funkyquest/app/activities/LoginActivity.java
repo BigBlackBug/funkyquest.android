@@ -4,7 +4,10 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -23,8 +26,8 @@ import com.funkyquest.app.api.LoginCredentials;
 import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
+import org.apache.http.conn.ConnectTimeoutException;
 
-import java.net.ConnectException;
 import java.util.Properties;
 
 /**
@@ -52,6 +55,7 @@ public class LoginActivity extends Activity {
     private View mLoginFormView;
     private View mLoginStatusView;
     private TextView mLoginStatusMessageView;
+    private ConnectivityManager connectivityManager;
 
     //TODO придумать обработку истории и прочего
     @Override
@@ -60,6 +64,7 @@ public class LoginActivity extends Activity {
 
         Log.d(TAG, "creating login activity");
 
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         setContentView(R.layout.activity_login);
         Properties properties = FunkyQuestApplication.getDefaultProperties(getApplicationContext());
 
@@ -104,12 +109,16 @@ public class LoginActivity extends Activity {
 //        return true;
 //    }
 
-    /**
-     * Attempts to sign in or register the account specified by the login form.
-     * If there are form errors (invalid email, missing fields, etc.), the
-     * errors are presented and no actual login attempt is made.
-     */
+    private boolean isNetworkConnected() {
+        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
+
     public void attemptLogin() {
+        if(!isNetworkConnected()){
+            FunkyQuestApplication.showToast(this, "Вы не подключены к сети", FunkyQuestApplication.Duration.LONG);
+            return;
+        }
 	    // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
@@ -281,7 +290,7 @@ public class LoginActivity extends Activity {
 
                 @Override
                 public void onApplicationError(int errorCode) {
-
+                    showProgress(false);
                 }
 
                 @Override
@@ -295,11 +304,11 @@ public class LoginActivity extends Activity {
 	        showProgress(false);
 	        //TODO analyze exception
 	        String message = "Неизвестная ошибка";
-	        if(ex instanceof ConnectException){
+	        if(ex instanceof ConnectTimeoutException){
 		        message = "Сервер недоступен";
 	        }
 	        FunkyQuestApplication.showToast(LoginActivity.this, message,
-	                                        FunkyQuestApplication.Duration.LONG);
+                    FunkyQuestApplication.Duration.LONG);
         }
 
         @Override

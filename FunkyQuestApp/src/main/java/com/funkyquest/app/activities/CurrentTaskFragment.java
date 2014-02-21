@@ -135,14 +135,9 @@ public class CurrentTaskFragment extends Fragment {
                 notificationService.showNotification("FunkyQuest", "Ответ правильный!", false,
                                                      EventType.ANSWER_REJECTED);
                 setTaskDTO(taskDTO);
-                gameActivity.runOnUiThread(new Runnable() {
-	                @Override
-	                public void run() {
-		                gameActivity.hideProgressBar();
-		                fillViews();
-		                FunkyQuestApplication.setViewState(true, buttonsLayout);
-	                }
-                });
+                gameActivity.hideProgressBar();
+                fillViews();
+                FunkyQuestApplication.setViewState(true, buttonsLayout);
                 }
             });
 			}
@@ -250,27 +245,22 @@ public class CurrentTaskFragment extends Fragment {
     }
 	     //TODO переписать этот треш на хендлеры
 	private void processHint(final HintDTO hintDTO) {
-		gameActivity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				Resources resources = gameActivity.getResources();
-				LinearLayout.LayoutParams layoutParams =
-						new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-						                              LinearLayout.LayoutParams.WRAP_CONTENT);
-				if (!tookHints) {
-					SeparatorView separatorView = new SeparatorView(gameActivity, resources.getString(R.string.hints));
-					mainContainer.addView(separatorView, layoutParams);
-					tookHints = true;
-				}
-				layoutParams.setMargins(30,5,30,5);
-				TakenHintView takenHintView = new TakenHintView(gameActivity, hintDTO);
-				mainContainer.addView(takenHintView, layoutParams);
-				hintsUsed++;
-				if(hintsUsed == originalTask.getHints().size()){
-					takeHint.setEnabled(false);
-				}
-			}
-		});
+        Resources resources = gameActivity.getResources();
+        LinearLayout.LayoutParams layoutParams =
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                              LinearLayout.LayoutParams.WRAP_CONTENT);
+        if (!tookHints) {
+            SeparatorView separatorView = new SeparatorView(gameActivity, resources.getString(R.string.hints));
+            mainContainer.addView(separatorView, layoutParams);
+            tookHints = true;
+        }
+        layoutParams.setMargins(30,5,30,5);
+        TakenHintView takenHintView = new TakenHintView(gameActivity, hintDTO);
+        mainContainer.addView(takenHintView, layoutParams);
+        hintsUsed++;
+        if(hintsUsed == originalTask.getHints().size()){
+            takeHint.setEnabled(false);
+        }
 	}
 
 	private final class ConfirmDialogListener implements View.OnClickListener {
