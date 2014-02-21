@@ -106,6 +106,9 @@ public class GameStatsView extends LinearLayout {
 	}
 
 	public void setTaskPrice(int taskPrice) {
+		if (taskPrice < 0) {
+			taskPrice = 0;
+		}
 		this.taskPrice = taskPrice;
 		taskPriceTV.setText(context.getString(R.string.task_price, taskPrice));
 	}

@@ -38,6 +38,7 @@
                 android:textSize="15sp"/>
 
         <ImageButton
+                android:visibility="gone"
                 android:layout_gravity="center"
                 android:layout_width="55dp"
                 android:id="@+id/imageButton"

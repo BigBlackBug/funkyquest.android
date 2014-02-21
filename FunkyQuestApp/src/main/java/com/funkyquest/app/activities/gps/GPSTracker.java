@@ -73,36 +73,38 @@ public class GPSTracker {
 		} else {
 			Location location = null;
 			this.isTrackingEnabled = true;
-			if (isNetworkEnabled) {
+			if (isGPSEnabled) {
 				locationManager.requestLocationUpdates(
-						LocationManager.NETWORK_PROVIDER,
+						LocationManager.GPS_PROVIDER,
 						MIN_UPDATE_INTERVAL,
 						MIN_UPDATE_DISTANCE, locationListener);
-				Log.d("Network", "Network");
+				Log.d("GPSTracker", "using gps");
 				if (locationManager != null) {
-					location = locationManager.getLastKnownLocation(
-							LocationManager.NETWORK_PROVIDER);
+					location = locationManager
+							.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 					if (location != null) {
 						locationListener.onLocationChanged(location);
 					}
 				}
 			}
-			if (isGPSEnabled) {
-				if (location == null) {
+
+			if (isNetworkEnabled) {
+				if(location == null){
 					locationManager.requestLocationUpdates(
-							LocationManager.GPS_PROVIDER,
+							LocationManager.NETWORK_PROVIDER,
 							MIN_UPDATE_INTERVAL,
 							MIN_UPDATE_DISTANCE, locationListener);
-					Log.d("GPS Enabled", "GPS Enabled");
+					Log.d("GPSTracker", "using network");
 					if (locationManager != null) {
-						location = locationManager
-								.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+						location = locationManager.getLastKnownLocation(
+								LocationManager.NETWORK_PROVIDER);
 						if (location != null) {
 							locationListener.onLocationChanged(location);
 						}
 					}
 				}
 			}
+
 			return true;
 		}
 	}
@@ -111,6 +113,19 @@ public class GPSTracker {
 		if (locationManager != null) {
 			locationManager.removeUpdates(locationListener);
 		}
+	}
+
+	public Location getLastKnownLocation(){
+		Location location = locationManager.getLastKnownLocation(
+				LocationManager.GPS_PROVIDER);
+		if(location == null){
+			location = locationManager.getLastKnownLocation(
+					LocationManager.NETWORK_PROVIDER);
+			if(location == null){
+				throw new RuntimeException("ERROR GETTING COORDINATES");
+			}
+		}
+		return location;
 	}
 
 	public boolean isTrackingEnabled() {

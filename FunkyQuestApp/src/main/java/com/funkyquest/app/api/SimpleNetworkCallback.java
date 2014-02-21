@@ -20,6 +20,6 @@ public abstract class SimpleNetworkCallback<T> implements NetworkCallback<T> {
 
     @Override
     public void onException(Exception ex) {
-
+	   Log.e(TAG,"ERROR",ex);
     }
 }

@@ -2,13 +2,16 @@ package com.funkyquest.app;
 
 import android.util.Log;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.funkyquest.app.dto.*;
 import com.funkyquest.app.dto.util.EventType;
 import com.funkyquest.app.dto.util.MessageBody;
 import com.funkyquest.app.util.MapOLists;
 import com.funkyquest.app.util.websockets.WebSocketClient;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -18,6 +21,7 @@ public class WebSocketClientListener implements WebSocketClient.Listener {
 
 	private final MapOLists<EventType, FQMessageListener> listeners =
 			new MapOLists<EventType, FQMessageListener>();
+	private final Map<EventType,Class<?>> messageTypes = new HashMap<EventType, Class<?>>();
 
 	private FQMessageListener<UUID> subscriptionListener;
 
@@ -35,6 +39,19 @@ public class WebSocketClientListener implements WebSocketClient.Listener {
 
 	public void setLifeCycleListener(SocketLifeCycleListener lifeCycleListener) {
 		this.lifeCycleListener = lifeCycleListener;
+	}
+
+	public WebSocketClientListener() {
+		messageTypes.put(EventType.GAME_STATUS_CHANGED, GameStatusDTO.class);
+		messageTypes.put(EventType.GAME_EDITED, GameDTO.class);
+		messageTypes.put(EventType.TEAM_CREATED, TeamDTO.class);
+		messageTypes.put(EventType.TEAM_CHANGED, TeamDTO.class);
+		messageTypes.put(EventType.TEAM_DELETED, AbstractDTO.class);
+		messageTypes.put(EventType.HINT_REQUESTED, HintDTO.class);
+		messageTypes.put(EventType.ANSWER_ACCEPTED, InGameTaskDTO.class);
+		messageTypes.put(EventType.ANSWER_REJECTED, Void.class);
+		messageTypes.put(EventType.ANSWER_POSTED, Void.class);
+		messageTypes.put(EventType.LOCATION_CHANGED, PlayerLocationDTO.class);
 	}
 
 	@Override
@@ -74,10 +91,11 @@ public class WebSocketClientListener implements WebSocketClient.Listener {
 				subscriptionListener.onMessage(UUID.fromString(connectionIDWrapper.getConnectionID()));
 				return;
 			} catch (IOException ex) {
-				return;
+				throw new RuntimeException("NEVER OCCURS LOL", ex);
 				//never happens
 			}
 		}
+		Log.i("SOCKET","hey, serialization success "+messageBody);
 //        Set<EventType> voidTypes = new HashSet<EventType>() {{
 //            add(EventType.GAME_FINISHED);
 //            add(EventType.GAME_CANCELLED);
@@ -89,8 +107,17 @@ public class WebSocketClientListener implements WebSocketClient.Listener {
 		EventType eventType = messageBody.getEventType();
 
 		List<FQMessageListener> listenerList = listeners.get(eventType);
+		Object body = null;
+		Class<?> aClass = messageTypes.get(eventType);
+		if(!aClass.equals(Void.TYPE)){
+			body = objectMapper.convertValue(messageBody.getBody(),aClass);
+		}
 		for (FQMessageListener listener : listenerList) {
-			listener.onMessage(messageBody.getBody());
+			try{
+				listener.onMessage(body);
+			}catch (Exception ex){
+				Log.e("tAG","MSG",ex);
+			}
 		}
 //        if (eventType == EventType.GAME_STATUS_CHANGED) {
 //            GameStatusDTO dto = (GameStatusDTO) messageBody.getBody();

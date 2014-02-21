@@ -29,6 +29,7 @@ import com.funkyquest.app.dto.TeamDTO;
 import com.funkyquest.app.dto.util.Subscription;
 import com.funkyquest.app.util.RequestCodes;
 import com.funkyquest.app.util.websockets.WebSocketClient;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -48,7 +49,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
      * may be best to switch to a
      * {@link android.support.v13.app.FragmentStatePagerAdapter}.
      */
-    SectionsPagerAdapter mSectionsPagerAdapter;
+    private SectionsPagerAdapter mSectionsPagerAdapter;
     /**
      * The {@link android.support.v4.view.ViewPager} that will host the section contents.
      */
@@ -73,7 +74,6 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 		enableTrackingLayout = findViewById(R.id.layout_enable_gps);
 		Button enableTrackingButton =
 				(Button) enableTrackingLayout.findViewById(R.id.button_enable_tracking);
@@ -88,6 +88,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
 		pbLayout = findViewById(R.id.preparing_activity_status);
 		final GameActivity activity=this;
+
 		new AsyncTask<Void,Void,Void>(){
 
 			@Override
@@ -146,11 +147,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 					public void onMessage(UUID connID) {
 						Log.i(ACTIVITY_TAG,"onsubscrubed");
 						connectionID = connID;
-						Subscription subscription = new Subscription();
-						subscription.setTeamID(teamID);
-						addSubscriptions(subscription);
-						subscription.setGameID(gameID);
-						addSubscriptions(subscription);
+						addSubs();
 					}
 				});
 				socketClient.connect();
@@ -212,16 +209,28 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
     }
 
-	private void addSubscriptions(final Subscription subscription) {
-		FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+	public void addSubs(){
+		final FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+		final Subscription subscription = new Subscription();
+		subscription.setTeamID(teamID);
+
 		serviceAPI.addSubscription(connectionID, subscription,
-	       new SimpleNetworkCallback<Void>() {
-	           @Override
-	           public void onSuccess(Void arg) {
-	               Log.i(ACTIVITY_TAG, "add subs success. "+subscription);
-	               //todo add subs success
-	           }
-	       });
+               new SimpleNetworkCallback<Void>() {
+                   @Override
+                   public void onSuccess(Void arg) {
+                   Log.i(ACTIVITY_TAG, "add subs success. "+subscription);
+                   final Subscription subscription2 = new Subscription();
+                   subscription2.setTeamID(teamID);
+                   subscription2.setGameID(gameID);
+                   serviceAPI.addSubscription(connectionID, subscription2,
+                          new SimpleNetworkCallback<Void>() {
+                              @Override
+                              public void onSuccess(Void arg) {
+                                  Log.i(ACTIVITY_TAG, "add subs success2. "+subscription2);
+                              }
+                          });
+                   }
+               });
 	}
 
 	long getGameId() {
@@ -316,6 +325,18 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
     }
 
+	GPSTracker getGpsTracker() {
+		return gpsTracker;
+	}
+
+	public ViewPager getViewPager() {
+		return mViewPager;
+	}
+
+	public SectionsPagerAdapter getSectionsAdapter() {
+		return mSectionsPagerAdapter;
+	}
+
 	/**
      * A {@link android.support.v13.app.FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -325,14 +346,30 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
         private ChatFragment chatFragment;
         private CurrentTaskFragment currentTaskFragment;
         private GameInfoFragment gameInfoFragment;
-        private MapFragment mapFragment;
+        private ActiveMapFragment mapFragment;
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+		public ChatFragment getChatFragment() {
+			return chatFragment;
+		}
+
+		public CurrentTaskFragment getCurrentTaskFragment() {
+			return currentTaskFragment;
+		}
+
+		public GameInfoFragment getGameInfoFragment() {
+			return gameInfoFragment;
+		}
+
+		public ActiveMapFragment getMapFragment() {
+			return mapFragment;
+		}
+
+		public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
             chatFragment = new ChatFragment("LOLCHAT",socketClient);
             currentTaskFragment = new CurrentTaskFragment(GameActivity.this);
             gameInfoFragment = new GameInfoFragment("GAMEINFO");
-            mapFragment = new MapFragment("MAP");
+            mapFragment = new ActiveMapFragment("MAP",/*TODO getgamelocation*/new LatLng(55.7629545,49.1732866),GameActivity.this);
         }
 
         @Override

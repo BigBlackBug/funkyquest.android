@@ -1,5 +1,6 @@
 package com.funkyquest.app;
 
+import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.dto.PlayerLocationDTO;
@@ -46,6 +47,7 @@ public class FQWebSocketClient {
 
 	public void sendLocation(PlayerLocationDTO location) {
 		try {
+			Log.i("SocketClient","sending location");
 			String json = objectMapper.writeValueAsString(location);
 			socketClient.send(json);
 		} catch (JsonProcessingException e) {

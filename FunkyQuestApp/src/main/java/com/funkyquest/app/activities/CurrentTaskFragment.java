@@ -1,6 +1,5 @@
 package com.funkyquest.app.activities;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
@@ -21,6 +20,7 @@ import com.funkyquest.app.api.SimpleNetworkCallback;
 import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.dto.*;
 import com.funkyquest.app.dto.util.EventType;
+import com.funkyquest.app.util.NotificationService;
 import com.funkyquest.app.util.Utils;
 
 import java.io.File;
@@ -36,10 +36,14 @@ public class CurrentTaskFragment extends Fragment {
 	private final GameStatsView gameStatsView;
 
 	private InGameTaskDTO taskDTO;
-    private long gameID;
-    private FQServiceAPI serviceAPI;
-    private ViewGroup mainContainer;
-    private boolean tookHints = false;
+
+	private long gameID;
+
+	private FQServiceAPI serviceAPI;
+
+	private ViewGroup mainContainer;
+
+	private boolean tookHints = false;
 
 	private TextView taskTitleTV;
 
@@ -63,6 +67,10 @@ public class CurrentTaskFragment extends Fragment {
 
 	private File imageFile;
 
+	private NotificationService notificationService;
+
+	private Button showOnMapButton;
+
 //	public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO, FQWebSocketClient socketClient,
 //                               GameStatsView gameStatsView) {
 //        this.gameID = gameID;
@@ -76,6 +84,7 @@ public class CurrentTaskFragment extends Fragment {
 		this.gameID = gameActivity.getGameId();
 		this.gameStatsView = gameActivity.getGameStatsView();
 		this.socketClient = gameActivity.getSocketClient();
+		this.notificationService = new NotificationService(gameActivity);
 		setTaskDTO(gameActivity.getTaskDTO());
 	}
 
@@ -83,16 +92,22 @@ public class CurrentTaskFragment extends Fragment {
 	    takeHint.setEnabled(false);
 	    if (originalTask.getHints().size() != 0) {
 		    takeHint.setEnabled(true);
-	    }   //TODO disable bttons is answer aleardy psoted
+	    }
+		for(PlayerAnswerDTO playerAnswerDTO:taskDTO.getPlayerAnswers()){
+			if(playerAnswerDTO.getTask().equals(taskDTO.getId()) && playerAnswerDTO.getCheckedDate()==null){
+				notificationService.showNotification("FunkyQuest", "Ответ принят", true,
+				                                     EventType.ANSWER_POSTED);
+				gameActivity.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+					FunkyQuestApplication.setViewState(false, buttonsLayout);
+					}
+				});
+			}
+		}
 	    taskTitleTV.setText(originalTask.getTitle());
 	    taskDescriptionTV.setText(originalTask.getText());
-	    Set<Long> usedHintIds = taskDTO.getUsedHintIds();
-	    for (HintDTO hintDTO:originalTask.getHints()){
-		    if(usedHintIds.contains(hintDTO.getId())){
-			    processNewHint(hintDTO);
-		    }
-	    }
-	    //TODO add more info
+		//TODO set marker
     }
 
 	private void setTaskDTO(InGameTaskDTO taskDTO){
@@ -116,14 +131,17 @@ public class CurrentTaskFragment extends Fragment {
 	                //TODO yay no more tasks
 	                return;
                 }
-                gameActivity.hideProgressBar();
+                notificationService.closeNotification(EventType.ANSWER_POSTED);
+                notificationService.showNotification("FunkyQuest", "Ответ правильный!", false,
+                                                     EventType.ANSWER_REJECTED);
                 setTaskDTO(taskDTO);
-                fillViews();
                 gameActivity.runOnUiThread(new Runnable() {
 	                @Override
 	                public void run() {
-	                FunkyQuestApplication.setViewState(false,buttonsLayout);
-                   }
+		                gameActivity.hideProgressBar();
+		                fillViews();
+		                FunkyQuestApplication.setViewState(true, buttonsLayout);
+	                }
                 });
                 }
             });
@@ -134,11 +152,13 @@ public class CurrentTaskFragment extends Fragment {
 			@Override
 			public void onMessage(Void message) {
 			Log.i(getTag(),"answer rejected");
-            //TODO show notif
+			notificationService.closeNotification(EventType.ANSWER_POSTED);
+			notificationService.showNotification("FunkyQuest", "Ответ неверный", false,
+			                                     EventType.ANSWER_REJECTED);
 			gameActivity.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-				FunkyQuestApplication.setViewState(false,buttonsLayout);
+				FunkyQuestApplication.setViewState(true, buttonsLayout);
 				}
 			});
 			}
@@ -149,7 +169,8 @@ public class CurrentTaskFragment extends Fragment {
 			@Override
 			public void onMessage(Void message) {
 			Log.i(getTag(),"answer posted notif");
-            //TODO show notif
+			notificationService.showNotification("FunkyQuest", "Ответ принят", true,
+			                                     EventType.ANSWER_POSTED);
 			gameActivity.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
@@ -164,19 +185,12 @@ public class CurrentTaskFragment extends Fragment {
 			public void onMessage(HintDTO hintDTO) {
 			Log.i(getTag(),"hint requested");
             if(!hintRequested){
-                processNewHint(hintDTO);
+	            currentTaskPrice -= hintDTO.getPoints();
+	            gameStatsView.setTaskPrice(currentTaskPrice);
+	            gameStatsView.increaseUsedHintNumber();
+                processHint(hintDTO);
             }
             hintRequested = false;
-			}
-		});
-		socketClient.addMessageListener(EventType.LOCATION_CHANGED,
-        new WebSocketClientListener.FQMessageListener<PlayerLocationDTO>() {
-			@Override
-			public void onMessage(PlayerLocationDTO locationDTO) {
-			long userID = locationDTO.getUserID();
-			double latitude = locationDTO.getLatitude();
-			double longitude = locationDTO.getLongitude();
-			Log.i(getTag(),"User "+userID+" coords: "+latitude+" "+longitude);
 			}
 		});
 	}
@@ -190,12 +204,29 @@ public class CurrentTaskFragment extends Fragment {
 	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_current_task);
 //	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_enable_gps);
         buttonsLayout = (ViewGroup) rootView.findViewById(R.id.layout_buttons);
+	    showOnMapButton= (Button) rootView.findViewById(R.id.button_show_on_map);
+	    showOnMapButton.setOnClickListener(new View.OnClickListener() {
+		    @Override
+		    public void onClick(View v) {
+			    gameActivity.getViewPager().setCurrentItem(1);
+//			    gameActivity.getSectionsAdapter().getMapFragment().moveCamera();
+			    //TODO show
+		    }
+	    });
         taskTitleTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_task_title);
 	    taskDescriptionTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_description);
 	    fillViews();
-        addListeners();  //TODO add btton disabled view
+	    Set<Long> usedHintIds = taskDTO.getUsedHintIds();
+	    for (HintDTO hintDTO:originalTask.getHints()){
+		    if(usedHintIds.contains(hintDTO.getId())){
+			    currentTaskPrice -= hintDTO.getPoints();
+			    processHint(hintDTO);
+		    }
+	    }
+	    gameStatsView.setTaskPrice(currentTaskPrice);
+        addListeners();
 
 	    takeHint.setOnClickListener(new View.OnClickListener() {
 		    @Override
@@ -204,7 +235,10 @@ public class CurrentTaskFragment extends Fragment {
 	            serviceAPI.getNextHint(gameID, taskDTO.getId(), new SimpleNetworkCallback<HintDTO>() {
 	                @Override
 	                public void onSuccess(HintDTO hintDTO) {
-	                processNewHint(hintDTO);
+	                currentTaskPrice -= hintDTO.getPoints();
+	                gameStatsView.setTaskPrice(currentTaskPrice);
+	                gameStatsView.increaseUsedHintNumber();
+	                processHint(hintDTO);
 	                }
 	            });
                 //TODO exc
@@ -214,28 +248,29 @@ public class CurrentTaskFragment extends Fragment {
         answerButton.setOnClickListener(new AnswerButtonClickListener());
 	    return rootView;
     }
-
-	private void processNewHint(HintDTO hintDTO) {
-		this.currentTaskPrice -= hintDTO.getPoints();
-		gameStatsView.setTaskPrice(currentTaskPrice);
-		gameStatsView.increaseUsedHintNumber();
-		Activity activity = getActivity();
-		Resources resources = activity.getResources();
-		LinearLayout.LayoutParams layoutParams =
-				new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-				                              LinearLayout.LayoutParams.WRAP_CONTENT);
-		if (!tookHints) {
-			SeparatorView separatorView = new SeparatorView(activity, resources.getString(R.string.hints));
-			mainContainer.addView(separatorView, layoutParams);
-			tookHints = true;
-		}
-		layoutParams.setMargins(30,5,30,5);
-		TakenHintView takenHintView = new TakenHintView(activity, hintDTO);
-		mainContainer.addView(takenHintView, layoutParams);
-		hintsUsed++;
-		if(hintsUsed == originalTask.getHints().size()){
-			takeHint.setEnabled(false);
-		}
+	     //TODO переписать этот треш на хендлеры
+	private void processHint(final HintDTO hintDTO) {
+		gameActivity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				Resources resources = gameActivity.getResources();
+				LinearLayout.LayoutParams layoutParams =
+						new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+						                              LinearLayout.LayoutParams.WRAP_CONTENT);
+				if (!tookHints) {
+					SeparatorView separatorView = new SeparatorView(gameActivity, resources.getString(R.string.hints));
+					mainContainer.addView(separatorView, layoutParams);
+					tookHints = true;
+				}
+				layoutParams.setMargins(30,5,30,5);
+				TakenHintView takenHintView = new TakenHintView(gameActivity, hintDTO);
+				mainContainer.addView(takenHintView, layoutParams);
+				hintsUsed++;
+				if(hintsUsed == originalTask.getHints().size()){
+					takeHint.setEnabled(false);
+				}
+			}
+		});
 	}
 
 	private final class ConfirmDialogListener implements View.OnClickListener {
