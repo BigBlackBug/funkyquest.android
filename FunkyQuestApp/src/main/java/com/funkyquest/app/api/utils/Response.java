@@ -4,13 +4,14 @@ import android.os.SystemClock;
 import android.util.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.funkyquest.app.util.FQObjectMapper;
 import org.apache.http.StatusLine;
 
 import java.io.IOException;
 
 public class Response {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new FQObjectMapper();
     private final StatusLine statusLine;
     private final String rawResponse;
 
@@ -24,7 +25,8 @@ public class Response {
     }
 
     public <T> T convertTo(TypeReference<T> type) throws IOException {
-	    Log.i("Response", "Starting deserialization of response to type "+type.getType());
+	    Log.i("Response", "Got response"+rawResponse);
+	    Log.i("Response", "Starting deserialization to type "+type.getType());
 	    long before = SystemClock.uptimeMillis();
 	    T result = mapper.readValue(rawResponse, type);
 	    Log.i("Response", "Deserializing response to type "+type.getType()+" took "+(SystemClock.uptimeMillis()-before)+"ms");

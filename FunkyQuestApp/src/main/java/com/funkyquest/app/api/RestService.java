@@ -5,6 +5,7 @@ import com.funkyquest.app.api.progress.MultipartEntityWithListener;
 import com.funkyquest.app.api.progress.WriteListener;
 import com.funkyquest.app.api.utils.Request;
 import com.funkyquest.app.api.utils.Response;
+import com.funkyquest.app.util.FQObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -29,7 +30,7 @@ class RestService {
     public static final String APPLICATION_JSON = "application/json";
     private final HttpContext httpContext;
     private final HttpClient httpClient;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new FQObjectMapper();
 
     public RestService(HttpContext httpContext, HttpClient httpClient) {
         this.httpContext = httpContext;

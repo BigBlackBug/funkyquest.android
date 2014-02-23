@@ -69,6 +69,7 @@ public class GPSTracker {
 		isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
 		if (!isGPSEnabled && !isNetworkEnabled) {
+			Log.d("GPSTracker", "disabled");
 			return false;
 		} else {
 			Location location = null;

@@ -17,6 +17,7 @@ import org.apache.http.protocol.HttpContext;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,6 +57,20 @@ public class FQServiceAPI {
 		}, callback));
 	}
 
+	public void getGameLocation(long locationID, NetworkCallback<LocationDTO> callback) throws UserNotLoggedInException {
+		checkLoginStatus();
+		URI uri = FQApiActions.GET_LOCATION.createURI(serverAddress, serverPort, locationID);
+		restService.get(new AsyncGetRequest<LocationDTO>(uri, EMPTY_MAP, new TypeReference<LocationDTO>() {
+		}, callback));
+	}
+
+	public void getTaskLocation(long locationID, NetworkCallback<LocationDTO> callback) throws UserNotLoggedInException {
+		checkLoginStatus();
+		URI uri = FQApiActions.GET_LOCATION.createURI(serverAddress, serverPort, locationID);
+		restService.get(new AsyncGetRequest<LocationDTO>(uri, EMPTY_MAP, new TypeReference<LocationDTO>() {
+		}, callback));
+	}
+
 	public void getCurrentTask(long gameID, NetworkCallback<InGameTaskDTO> callback)
 			throws UserNotLoggedInException {
 		checkLoginStatus();
@@ -76,7 +91,19 @@ public class FQServiceAPI {
 	                       NetworkCallback<Void> callback) throws UserNotLoggedInException {
 		checkLoginStatus();
 		URI uri = FQApiActions.ADD_SUBSCRIPTION.createURI(serverAddress, serverPort, connectionID, subscription);
-		restService.get(new AsyncGetRequest<Void>(uri,EMPTY_MAP,new TypeReference<Void>(){},callback));
+		restService.get(new AsyncGetRequest<Void>(uri, toMap(subscription,connectionID),new TypeReference<Void>(){},callback));
+	}
+
+	private Map<String, String> toMap(Subscription subscription,UUID connectionID) {
+		Map<String, String> map = new HashMap<String,String>();
+		Long gameID = subscription.getGameID();
+		Long teamID = subscription.getTeamID();
+		Long userID = subscription.getUserID();
+		map.put("gameId", String.valueOf(gameID));
+		map.put("teamId", String.valueOf(teamID));
+		map.put("userId", String.valueOf(userID));
+		map.put("connectionId", connectionID.toString());
+		return map;
 	}
 
 	public void uploadFile(String pathToFile,NetworkCallback<MediaObjectDTO> callback,

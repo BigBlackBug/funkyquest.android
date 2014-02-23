@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -24,6 +25,8 @@ import com.funkyquest.app.util.NotificationService;
 import com.funkyquest.app.util.Utils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.Set;
 
 /**
@@ -107,7 +110,12 @@ public class CurrentTaskFragment extends Fragment {
 		}
 	    taskTitleTV.setText(originalTask.getTitle());
 	    taskDescriptionTV.setText(originalTask.getText());
-		//TODO set marker
+		serviceAPI.getTaskLocation(originalTask.getSearchArea(),new SimpleNetworkCallback<LocationDTO>() {
+			@Override
+			public void onSuccess(LocationDTO location) {
+				gameActivity.getSectionsAdapter().getMapFragment().setTaskLocation(location.getJson());
+			}
+		});
     }
 
 	private void setTaskDTO(InGameTaskDTO taskDTO){
@@ -203,11 +211,10 @@ public class CurrentTaskFragment extends Fragment {
 	    showOnMapButton.setOnClickListener(new View.OnClickListener() {
 		    @Override
 		    public void onClick(View v) {
-			    gameActivity.getViewPager().setCurrentItem(1);
-//			    gameActivity.getSectionsAdapter().getMapFragment().moveCamera();
-			    //TODO show
-		    }
-	    });
+		    gameActivity.getViewPager().setCurrentItem(1);
+		    gameActivity.getSectionsAdapter().getMapFragment().centerOnTask();
+	     }
+    });
         taskTitleTV =
 			    (TextView) mainContainer.findViewById(R.id.tv_task_task_title);
 	    taskDescriptionTV =
@@ -243,7 +250,7 @@ public class CurrentTaskFragment extends Fragment {
         answerButton.setOnClickListener(new AnswerButtonClickListener());
 	    return rootView;
     }
-	     //TODO переписать этот треш на хендлеры
+
 	private void processHint(final HintDTO hintDTO) {
         Resources resources = gameActivity.getResources();
         LinearLayout.LayoutParams layoutParams =
@@ -277,7 +284,6 @@ public class CurrentTaskFragment extends Fragment {
 			serviceAPI.uploadFile(imageFile.getAbsolutePath(),new SimpleNetworkCallback<MediaObjectDTO>() {
                   @Override
                   public void onSuccess(MediaObjectDTO mediaObject) {
-                      //TODO compress file
                       PlayerAnswerDTO dto = new PlayerAnswerDTO();
                       dto.setTask(taskDTO.getId());
                       dto.setMediaObj(mediaObject.getId());
@@ -321,6 +327,15 @@ public class CurrentTaskFragment extends Fragment {
 	}
 
 	public void showSendImageDialog() {
+		int scaleFactor = 8;
+		try {
+			FileOutputStream os = new FileOutputStream(imageFile);
+			Bitmap bitmap = Utils.readRotateAndScale(imageFile, scaleFactor/2, gameActivity);
+			bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+			scaleFactor = 2;
+		} catch (FileNotFoundException e) {
+
+		}
 		LayoutInflater inflater = getActivity().getLayoutInflater();
 		LinearLayout dialogLayout =
 				(LinearLayout) inflater.inflate(R.layout.image_dialog_view, null);
@@ -329,7 +344,7 @@ public class CurrentTaskFragment extends Fragment {
 		ProgressBar progressBar = (ProgressBar) dialogLayout.findViewById(R.id.progressbar);
 
 		ImageView takenImageIV = (ImageView) dialogLayout.findViewById(R.id.iv_dialog_thumbnail);
-		takenImageIV.setImageBitmap(Utils.readRotateAndScale(imageFile,8, gameActivity));
+		takenImageIV.setImageBitmap(Utils.readRotateAndScale(imageFile,scaleFactor, gameActivity));
 		takenImageIV.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());

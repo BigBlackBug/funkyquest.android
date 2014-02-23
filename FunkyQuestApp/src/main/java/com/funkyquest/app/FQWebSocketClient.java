@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.funkyquest.app.dto.PlayerLocationDTO;
 import com.funkyquest.app.dto.util.EventType;
+import com.funkyquest.app.util.FQObjectMapper;
 import com.funkyquest.app.util.websockets.WebSocketClient;
 
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class FQWebSocketClient {
 
 	private final WebSocketClientListener socketListener;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new FQObjectMapper();
 
 	public FQWebSocketClient(WebSocketClient socketClient,
 	                         WebSocketClientListener socketListener) {

@@ -10,7 +10,6 @@ public abstract class SimpleNetworkCallback<T> implements NetworkCallback<T> {
 
     @Override
     public void onApplicationError(int errorCode) {
-        //TODO какой запрос?
         Log.e(TAG, "Запрос вернул ошбку " + errorCode);
     }
 

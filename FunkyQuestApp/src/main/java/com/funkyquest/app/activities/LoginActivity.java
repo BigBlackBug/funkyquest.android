@@ -26,7 +26,9 @@ import com.funkyquest.app.api.LoginCredentials;
 import com.funkyquest.app.api.NetworkCallback;
 import com.funkyquest.app.dto.GameDTO;
 import com.funkyquest.app.dto.InGameTaskDTO;
+import com.funkyquest.app.util.FQObjectMapper;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.HttpHostConnectException;
 
 import java.util.Properties;
 
@@ -42,7 +44,7 @@ public class LoginActivity extends Activity {
 //    public static final String EXTRA_EMAIL =
 //            "com.example.android.authenticatordemo.extra.EMAIL";
     public static final String TAG = "TAG";
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new FQObjectMapper();
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -270,7 +272,7 @@ public class LoginActivity extends Activity {
                 @Override
                 public void onSuccess(final GameDTO currentGame) {
                     if (currentGame == null) {
-	                    FunkyQuestApplication.showToast(LoginActivity.this,"GAME=null",
+	                    FunkyQuestApplication.showToast(LoginActivity.this,"Вы не в игре",
 	                                                    FunkyQuestApplication.Duration.LONG);
 	                    showProgress(false);
                         //TODO show list of available games
@@ -302,9 +304,8 @@ public class LoginActivity extends Activity {
         @Override
         public void onException(Exception ex) {
 	        showProgress(false);
-	        //TODO analyze exception
 	        String message = "Неизвестная ошибка";
-	        if(ex instanceof ConnectTimeoutException){
+	        if(ex instanceof ConnectTimeoutException|| ex instanceof HttpHostConnectException){
 		        message = "Сервер недоступен";
 	        }
 	        FunkyQuestApplication.showToast(LoginActivity.this, message,

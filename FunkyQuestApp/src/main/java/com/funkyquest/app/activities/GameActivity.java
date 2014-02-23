@@ -2,6 +2,7 @@ package com.funkyquest.app.activities;
 
 import android.app.*;
 import android.content.Intent;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -27,9 +28,9 @@ import com.funkyquest.app.dto.InGameTaskDTO;
 import com.funkyquest.app.dto.InGameTaskSequenceDTO;
 import com.funkyquest.app.dto.TeamDTO;
 import com.funkyquest.app.dto.util.Subscription;
+import com.funkyquest.app.util.FQObjectMapper;
 import com.funkyquest.app.util.RequestCodes;
 import com.funkyquest.app.util.websockets.WebSocketClient;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -40,7 +41,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
     public static final int TAB_NUMBER = 4;
 
-	private final ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper = new FQObjectMapper();
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -265,6 +266,10 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 		super.onActivityResult(requestCode, resultCode, data);
 		if(requestCode == RequestCodes.OPEN_GPS_SETTINGS_REQUEST_CODE){
 			boolean trackingEnabled = gpsTracker.startTracker();
+			if(trackingEnabled){
+				Location playersLocation = gpsTracker.getLastKnownLocation();
+				mSectionsPagerAdapter.getMapFragment().addPlayersLocation(userID, playersLocation.getLatitude(), playersLocation.getLongitude());
+			}
 			enableTrackingLayout.setVisibility(trackingEnabled ? View.GONE : View.VISIBLE);
 		} else if (requestCode == RequestCodes.TAKE_PICTURE_REQUEST_CODE) {
 			if (resultCode == RESULT_OK) {
@@ -369,7 +374,8 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
             chatFragment = new ChatFragment("LOLCHAT",socketClient);
             currentTaskFragment = new CurrentTaskFragment(GameActivity.this);
             gameInfoFragment = new GameInfoFragment("GAMEINFO");
-            mapFragment = new ActiveMapFragment("MAP",/*TODO getgamelocation*/new LatLng(55.7629545,49.1732866),GameActivity.this);
+            mapFragment = new ActiveMapFragment("MAP",gameDTO.getTemplate().getLocation(),userID,
+                                                GameActivity.this);
         }
 
         @Override
