@@ -34,6 +34,7 @@ public enum FQApiActions {
 		}
 	},
 	ADD_SUBSCRIPTION("/addSubscription"),
+	ADD_SUBSCRIPTIONS("/addSubscriptions?connectionId=%s"),
 	GET_GAME_BY_ID("/api/games/%s"),
 	LOGIN("/api/login"),
     ACTIVE_GAME("/api/activeGames"),

@@ -42,7 +42,8 @@ public class GPSTracker {
 		// Setting Dialog Title
 		alertDialog.setTitle("Настройки местоположения");
 
-		alertDialog.setMessage("Определение местоположения отключено. Хотите открыть меню настроек?");
+		alertDialog
+				.setMessage("Определение местоположения отключено. Хотите открыть меню настроек?");
 
 		alertDialog.setPositiveButton("Настройки", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
@@ -69,43 +70,40 @@ public class GPSTracker {
 		isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
 		if (!isGPSEnabled && !isNetworkEnabled) {
-			Log.d("GPSTracker", "disabled");
 			return false;
 		} else {
 			Location location = null;
 			this.isTrackingEnabled = true;
-			if (isGPSEnabled) {
+			if (isNetworkEnabled) {
 				locationManager.requestLocationUpdates(
-						LocationManager.GPS_PROVIDER,
+						LocationManager.NETWORK_PROVIDER,
 						MIN_UPDATE_INTERVAL,
 						MIN_UPDATE_DISTANCE, locationListener);
-				Log.d("GPSTracker", "using gps");
+				Log.d("GpsTracker", "Using Network");
 				if (locationManager != null) {
-					location = locationManager
-							.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+					location = locationManager.getLastKnownLocation(
+							LocationManager.NETWORK_PROVIDER);
 					if (location != null) {
 						locationListener.onLocationChanged(location);
 					}
 				}
 			}
-
-			if (isNetworkEnabled) {
-				if(location == null){
+			if (isGPSEnabled) {
+				if (location == null) {
 					locationManager.requestLocationUpdates(
-							LocationManager.NETWORK_PROVIDER,
+							LocationManager.GPS_PROVIDER,
 							MIN_UPDATE_INTERVAL,
 							MIN_UPDATE_DISTANCE, locationListener);
-					Log.d("GPSTracker", "using network");
+					Log.d("GpsTracker", "Using GPS");
 					if (locationManager != null) {
-						location = locationManager.getLastKnownLocation(
-								LocationManager.NETWORK_PROVIDER);
+						location = locationManager
+								.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 						if (location != null) {
 							locationListener.onLocationChanged(location);
 						}
 					}
 				}
 			}
-
 			return true;
 		}
 	}
@@ -122,9 +120,6 @@ public class GPSTracker {
 		if(location == null){
 			location = locationManager.getLastKnownLocation(
 					LocationManager.NETWORK_PROVIDER);
-			if(location == null){
-				throw new RuntimeException("ERROR GETTING COORDINATES");
-			}
 		}
 		return location;
 	}

@@ -46,13 +46,13 @@ public class CurrentTaskFragment extends Fragment {
 
 	private ViewGroup mainContainer;
 
-	private boolean tookHints = false;
+	private boolean tookHints;
 
 	private TextView taskTitleTV;
 
 	private TextView taskDescriptionTV;
 
-	private boolean hintRequested = false;
+	private boolean hintRequested;
 
     private ViewGroup buttonsLayout;
 
@@ -74,7 +74,9 @@ public class CurrentTaskFragment extends Fragment {
 
 	private Button showOnMapButton;
 
-//	public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO, FQWebSocketClient socketClient,
+	private View separatorView;
+
+	//	public CurrentTaskFragment(Long gameID, InGameTaskDTO taskDTO, FQWebSocketClient socketClient,
 //                               GameStatsView gameStatsView) {
 //        this.gameID = gameID;
 //	    this.gameStatsView = gameStatsView;
@@ -92,10 +94,14 @@ public class CurrentTaskFragment extends Fragment {
 	}
 
 	private void fillViews() {
+		tookHints = false;
+		hintRequested = false;
+		hintsUsed = 0;
 	    takeHint.setEnabled(false);
 	    if (originalTask.getHints().size() != 0) {
 		    takeHint.setEnabled(true);
 	    }
+		separatorView.setVisibility(View.GONE);
 		for(PlayerAnswerDTO playerAnswerDTO:taskDTO.getPlayerAnswers()){
 			if(playerAnswerDTO.getTask().equals(taskDTO.getId()) && playerAnswerDTO.getCheckedDate()==null){
 				notificationService.showNotification("FunkyQuest", "Ответ принят", true,
@@ -210,6 +216,7 @@ public class CurrentTaskFragment extends Fragment {
 	    final View rootView = inflater.inflate(R.layout.current_task_fragment, container, false);
 	    takeHint = (Button) rootView.findViewById(R.id.button_take_hint);
 	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_current_task);
+	    this.separatorView = mainContainer.findViewById(R.id.separator_view);
 //	    this.mainContainer = (ViewGroup) rootView.findViewById(R.id.layout_enable_gps);
         buttonsLayout = (ViewGroup) rootView.findViewById(R.id.layout_buttons);
 	    showOnMapButton= (Button) rootView.findViewById(R.id.button_show_on_map);
@@ -262,8 +269,9 @@ public class CurrentTaskFragment extends Fragment {
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                                               LinearLayout.LayoutParams.WRAP_CONTENT);
         if (!tookHints) {
-            SeparatorView separatorView = new SeparatorView(gameActivity, resources.getString(R.string.hints));
-            mainContainer.addView(separatorView, layoutParams);
+	        separatorView.setVisibility(View.VISIBLE);
+//            SeparatorView separatorView = new SeparatorView(gameActivity, resources.getString(R.string.hints));
+//            mainContainer.addView(separatorView, layoutParams);
             tookHints = true;
         }
         layoutParams.setMargins(30,5,30,5);

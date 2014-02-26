@@ -25,5 +25,8 @@ public class TakenHintView extends LinearLayout {
 
 	public TakenHintView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		LayoutInflater inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		ViewGroup mainView = (ViewGroup) inflater.inflate(R.layout.taken_hint_view, this, true);
 	}
 }

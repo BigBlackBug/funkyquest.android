@@ -33,6 +33,7 @@ import com.funkyquest.app.util.RequestCodes;
 import com.funkyquest.app.util.websockets.WebSocketClient;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -148,7 +149,7 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 					public void onMessage(UUID connID) {
 						Log.i(ACTIVITY_TAG,"onsubscrubed");
 						connectionID = connID;
-						addSubs();
+						addSubsriptions();
 					}
 				});
 				socketClient.connect();
@@ -210,28 +211,19 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 
     }
 
-	public void addSubs(){
-		final FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
-		final Subscription subscription = new Subscription();
+	public void addSubsriptions(){
+		FQServiceAPI serviceAPI = FunkyQuestApplication.getServiceAPI();
+		Subscription subscription = new Subscription();
 		subscription.setTeamID(teamID);
-
-		serviceAPI.addSubscription(connectionID, subscription,
-               new SimpleNetworkCallback<Void>() {
-                   @Override
-                   public void onSuccess(Void arg) {
-                   Log.i(ACTIVITY_TAG, "add subs success. "+subscription);
-                   final Subscription subscription2 = new Subscription();
-                   subscription2.setTeamID(teamID);
-                   subscription2.setGameID(gameID);
-                   serviceAPI.addSubscription(connectionID, subscription2,
-                          new SimpleNetworkCallback<Void>() {
-                              @Override
-                              public void onSuccess(Void arg) {
-                                  Log.i(ACTIVITY_TAG, "add subs success2. "+subscription2);
-                              }
-                          });
-                   }
-               });
+		Subscription subscription2 = new Subscription();
+		subscription2.setTeamID(teamID);
+		subscription2.setGameID(gameID);
+		serviceAPI.addSubscriptions(connectionID, Arrays.asList(subscription,subscription2), new SimpleNetworkCallback<Void>() {
+			@Override
+			public void onSuccess(Void arg){
+				Log.i(ACTIVITY_TAG, "add subs success. ");
+			}
+		});
 	}
 
 	long getGameId() {
@@ -268,7 +260,9 @@ public class GameActivity extends Activity implements ActionBar.TabListener {
 			boolean trackingEnabled = gpsTracker.startTracker();
 			if(trackingEnabled){
 				Location playersLocation = gpsTracker.getLastKnownLocation();
-				mSectionsPagerAdapter.getMapFragment().addPlayersLocation(userID, playersLocation.getLatitude(), playersLocation.getLongitude());
+				if(playersLocation!=null){
+					mSectionsPagerAdapter.getMapFragment().addPlayersLocation(userID, playersLocation.getLatitude(), playersLocation.getLongitude());
+				}
 			}
 			enableTrackingLayout.setVisibility(trackingEnabled ? View.GONE : View.VISIBLE);
 		} else if (requestCode == RequestCodes.TAKE_PICTURE_REQUEST_CODE) {

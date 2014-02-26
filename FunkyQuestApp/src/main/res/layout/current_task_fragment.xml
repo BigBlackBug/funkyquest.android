@@ -3,7 +3,7 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
-        android:background="#5a5a5a">
+        >
     <!--TODO добавить инфу о ценности таска-->
     <ScrollView
             android:layout_width="match_parent"
@@ -44,20 +44,49 @@
                     android:textAppearance="@android:style/TextAppearance.Large"/>
 
             <Button
-
+                    style="@style/myButtonStyle"
                     android:id="@+id/button_show_on_map"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
                     android:layout_marginBottom="15dip"
                     android:layout_marginLeft="100dp"
                     android:layout_marginRight="100dp"
                     android:text="Посмотреть на карте"
                     android:layout_gravity="center"
-                    android:background="@drawable/bg_card"
-                    android:textColor="#7BAAF7"
+                    android:textColor="#77adff"
                     android:textStyle="bold"
                     />
+            <LinearLayout android:id="@+id/separator_view"
+                          android:orientation="horizontal"
+                          android:visibility="gone"
+                          android:layout_marginBottom="5dp"
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content">
+
+                <FrameLayout
+                        android:background="@android:color/darker_gray"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_gravity="center"
+                        android:layout_height="2dp"/>
+
+                <TextView
+                        android:id="@+id/tv_separator_text"
+                        android:layout_weight="0"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Подсказки"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:layout_gravity="center"/>
+
+                <FrameLayout
+                        android:layout_gravity="center"
+                        android:background="@android:color/darker_gray"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="2dp"/>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
@@ -68,9 +97,9 @@
             android:orientation="horizontal">
         <!-- your bottom content -->
         <Button
-                android:layout_margin="4dp"
-                android:background="@drawable/bg_card"
-                android:textColor="#7BAAF7"
+                android:layout_margin="5dp"
+                style="@style/myButtonStyle"
+                android:textStyle="bold"
                 android:id="@+id/button_answer"
                 android:text="@string/answer_task"
                 android:layout_width="0dp"
@@ -78,9 +107,9 @@
                 android:layout_height="fill_parent"/>
 
         <Button
-                android:layout_margin="4dp"
-                android:background="@drawable/bg_card"
-                android:textColor="#7BAAF7"
+                android:layout_margin="5dp"
+                style="@style/myButtonStyle"
+                android:textStyle="bold"
                 android:id="@+id/button_take_hint"
                 android:text="@string/take_hint"
                 android:layout_width="0dp"

@@ -16,10 +16,7 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class FQServiceAPI {
 
@@ -92,6 +89,15 @@ public class FQServiceAPI {
 		checkLoginStatus();
 		URI uri = FQApiActions.ADD_SUBSCRIPTION.createURI(serverAddress, serverPort, connectionID, subscription);
 		restService.get(new AsyncGetRequest<Void>(uri, toMap(subscription,connectionID),new TypeReference<Void>(){},callback));
+	}
+
+	public void addSubscriptions(UUID connectionID, List<Subscription> subscriptions,
+	                            NetworkCallback<Void> callback) throws UserNotLoggedInException {
+		checkLoginStatus();
+		URI uri = FQApiActions.ADD_SUBSCRIPTIONS.createURI(serverAddress, serverPort, connectionID);
+		restService.post(new AsyncRequest<List<Subscription>, Void>(uri, subscriptions,
+		                                                            new TypeReference<Void>() {
+		                                                            }, callback));
 	}
 
 	private Map<String, String> toMap(Subscription subscription,UUID connectionID) {

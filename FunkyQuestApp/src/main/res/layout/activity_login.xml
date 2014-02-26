@@ -66,17 +66,15 @@
                 android:imeOptions="actionUnspecified" />
 
             <Button
-                    style="@style/btnStylemedium_wood"
+                    style="@style/myButtonStyle"
                     android:id="@+id/sign_in_button"
-                android:layout_width="100dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/action_sign_in"
                 android:paddingLeft="32dp"
                 android:paddingRight="32dp"
                 android:layout_gravity="right" />
-
         </LinearLayout>
-
     </ScrollView>
 </FrameLayout>
