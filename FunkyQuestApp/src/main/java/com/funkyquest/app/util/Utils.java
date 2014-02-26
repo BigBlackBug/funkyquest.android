@@ -5,9 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
-import android.net.Uri;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -18,10 +18,9 @@ public class Utils {
 	public static Bitmap readRotateAndScale(File imageFile, int sampleSize, Context context) {
 		try {
 			final BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inJustDecodeBounds = false;
+//			options.inJustDecodeBounds = false;
 			options.inSampleSize = sampleSize;
-			Bitmap bmp = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(
-					Uri.fromFile(imageFile.getAbsoluteFile())), null, options);
+			Bitmap bmp = BitmapFactory.decodeStream(new FileInputStream(imageFile), null, options);
 			ExifInterface ei = new ExifInterface(imageFile.getAbsolutePath());
 			int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
 			                                     ExifInterface.ORIENTATION_NORMAL);

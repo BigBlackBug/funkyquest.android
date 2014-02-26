@@ -219,7 +219,7 @@ public class LoginActivity extends Activity {
 		public void onSuccess(InGameTaskDTO currentTask) {
 			if (currentTask == null) {
 				//TODO no more tasks, yay
-			} else {
+			} else {//TODO in main thread oh
 				Log.i(TAG,"serializing entities");
 				Intent intent = new Intent(LoginActivity.this, GameActivity.class);
 				intent.putExtra("userID", userID);

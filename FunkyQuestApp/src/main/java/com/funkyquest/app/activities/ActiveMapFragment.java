@@ -167,8 +167,10 @@ public class ActiveMapFragment extends Fragment {
 			@Override
 			public void run() {
 				map.clear();
-				map.addCircle(taskCircle);
-				map.addMarker(taskMarker).showInfoWindow();
+                if(taskCircle!=null){
+                    map.addCircle(taskCircle);
+                    map.addMarker(taskMarker).showInfoWindow();
+                }
 				for(Map.Entry<Long,PlayerLocationDTO> entry:players.entrySet()){
 					int color = Color.BLUE;
 					if(entry.getKey().equals(userID)){

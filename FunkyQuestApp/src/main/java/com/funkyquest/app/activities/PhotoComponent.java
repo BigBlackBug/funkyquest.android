@@ -40,7 +40,7 @@ public class PhotoComponent {
 			activity.startActivityForResult(takePictureIntent, RequestCodes.TAKE_PICTURE_REQUEST_CODE);
 			return photoFile;
 		} else {
-			throw new FQException("Камера не доступна");
+			throw new FQException("Камера недоступна");
 		}
 	}
 

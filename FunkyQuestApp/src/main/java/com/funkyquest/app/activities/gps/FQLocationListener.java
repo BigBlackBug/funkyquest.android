@@ -20,6 +20,8 @@ public class FQLocationListener implements LocationListener {
 		this.userID = userID;
 	}
 
+    //TODO отваливается подключение, когда активити становится idle
+    //TODO подписаться на геймфинишд
 	@Override
 	public void onLocationChanged(Location location) {
 		if (socketClient.isConnected()) {

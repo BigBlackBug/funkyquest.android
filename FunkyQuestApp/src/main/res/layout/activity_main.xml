@@ -3,13 +3,13 @@
              android:layout_width="match_parent"
              tools:context=".GameActivity"
              android:layout_height="match_parent"
-             android:background="@drawable/bg">
+             android:background="#F0F0F0">
     <LinearLayout
             android:id="@+id/layout_game_activity_main"
             android:orientation="vertical"
             android:layout_height="match_parent"
             android:layout_width="match_parent"
-            android:background="@drawable/bg">
+            android:background="#F0F0F0">
 
         <LinearLayout
                 android:id="@+id/layout_enable_gps"
@@ -20,7 +20,6 @@
                 android:layout_marginBottom="5dp">
 
             <Button
-                    style="@style/btnStylemedium_wood"
                     android:id="@+id/button_enable_tracking"
                     android:text="@string/enable_tracking"
                     android:layout_width="0dp"

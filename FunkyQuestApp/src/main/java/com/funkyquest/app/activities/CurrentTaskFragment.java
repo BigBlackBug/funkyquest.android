@@ -129,23 +129,28 @@ public class CurrentTaskFragment extends Fragment {
 		new WebSocketClientListener.FQMessageListener<Void>() {
 			@Override
 			public void onMessage(Void message) {
-			gameStatsView.increaseScore(currentTaskPrice);
-			gameStatsView.increaseTaskIndex();
-			gameActivity.showProgressBar(gameActivity.getString(R.string.getting_new_task));
-            serviceAPI.getCurrentTask(gameID,new SimpleNetworkCallback<InGameTaskDTO>() {
+            gameActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                gameStatsView.increaseScore(currentTaskPrice);
+                gameStatsView.increaseTaskIndex();
+                gameActivity.showProgressBar(gameActivity.getString(R.string.getting_new_task));
+                }
+            });
+            serviceAPI.getCurrentTask(gameID, new SimpleNetworkCallback<InGameTaskDTO>() {
                 @Override
                 public void onSuccess(InGameTaskDTO taskDTO) {
-                if(taskDTO == null){
-	                //TODO yay no more tasks
-	                return;
-                }
-                notificationService.closeNotification(EventType.ANSWER_POSTED);
-                notificationService.showNotification("FunkyQuest", "Ответ правильный!", false,
-                                                     EventType.ANSWER_REJECTED);
-                setTaskDTO(taskDTO);
-                gameActivity.hideProgressBar();
-                fillViews();
-                FunkyQuestApplication.setViewState(true, buttonsLayout);
+                    if (taskDTO == null) {
+                        //TODO yay no more tasks
+                        return;
+                    }
+                    notificationService.closeNotification(EventType.ANSWER_POSTED);
+                    notificationService.showNotification("FunkyQuest", "Ответ правильный!", false,
+                            EventType.ANSWER_REJECTED);
+                    setTaskDTO(taskDTO);
+                    gameActivity.hideProgressBar();
+                    fillViews();
+                    FunkyQuestApplication.setViewState(true, buttonsLayout);
                 }
             });
 			}
@@ -172,7 +177,7 @@ public class CurrentTaskFragment extends Fragment {
 			@Override
 			public void onMessage(Void message) {
 			Log.i(getTag(),"answer posted notif");
-			notificationService.showNotification("FunkyQuest", "Ответ принят", true,
+			notificationService.showNotification("FunkyQuest", "Ответ отправлен", true,
 			                                     EventType.ANSWER_POSTED);
 			gameActivity.runOnUiThread(new Runnable() {
 				@Override
