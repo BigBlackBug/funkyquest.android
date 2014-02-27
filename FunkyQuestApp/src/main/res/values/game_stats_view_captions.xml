@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="task_price">Таска стоит %1$s очков</string>
-    <string name="score">У тебя %1$s очков</string>
-    <string name="task_index">Это таска #%1$s</string>
+    <string name="task_price">Стоимость задания: %1$s</string>
+    <string name="score">Текущие очки: %1$s</string>
+    <string name="task_index">Это задание #%1$s</string>
     <string name="hints_used">Подсказки: %1$s из %2$s</string>
     <string name="time_in_game">Время в игре: %1$s</string>
 </resources>
